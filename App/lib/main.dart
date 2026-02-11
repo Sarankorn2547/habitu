@@ -1,85 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+// --- Imports ไฟล์ต่างๆ ในโปรเจกต์ ---
+import 'firebase_options.dart'; // สำคัญ: ต้อง import เพื่อให้ใช้ DefaultFirebaseOptions ได้
+import 'services/auth_service.dart';
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
 
 void main() async {
+  // 1. รอให้ Native Code โหลดเสร็จก่อน
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 2. เริ่มต้น Firebase ด้วย Options ที่ได้จาก FlutterFire CLI
+  // (แก้ปัญหาเรื่องหา google-services.json ไม่เจอ หรือ setup ผิด platform)
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const MyApp());
+
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Habitu Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Habitu Firebase Test'),
-    );
-  }
-}
+    return MultiProvider(
+      providers: [
+        // Provider 1: AuthService (Logic การ Login/Register)
+        Provider<AuthService>(create: (_) => AuthService()),
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void addHabit() {
-    FirebaseFirestore.instance
-        .collection('habits')
-        .add({
-          'name': 'อ่านหนังสือ',
-          'status': 'incomplete',
-          'timestamp': FieldValue.serverTimestamp(),
-          'count': _counter, // ลองเก็บเลข Counter ไปด้วยก็ได้ครับ
-        })
-        .then((value) => print("บันทึกข้อมูลสำเร็จ! ID: ${value.id}"))
-        .catchError((error) => print("เกิดข้อผิดพลาด: $error"));
-  }
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-    addHabit(); // กดปุ่มแล้วส่งข้อมูลทันที
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('กดปุ่มเพื่อส่งข้อมูลไป Firebase:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+        // Provider 2: User Stream (ฟังสถานะ Login แบบ Realtime)
+        // ถ้า User Login อยู่ ค่าจะเป็น User Object
+        // ถ้า User Logout ค่าจะเป็น null
+        StreamProvider<User?>(
+          create: (context) => context.read<AuthService>().user,
+          initialData: null,
+          catchError: (_, err) => null, // ป้องกัน error จุกจิกกรณี Auth หลุด
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment & Send',
-        child: const Icon(Icons.cloud_upload), // เปลี่ยนไอคอนให้ดูสื่อถึง Cloud
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false, // ปิดป้าย Debug มุมขวาบน
+        title: 'Habitu', // ชื่อแอป
+        // --- Theme Setting (Material 3) ---
+        theme: ThemeData(
+          useMaterial3: true, // ใช้ดีไซน์แบบใหม่
+          colorScheme: ColorScheme.fromSeed(
+            seedColor:
+                Colors.orange, // สีหลักของแอป (เข้ากับธีมสัตว์เลี้ยง/พลังงาน)
+            brightness: Brightness.light,
+          ),
+          fontFamily: 'GoogleSans', // (ถ้าคุณลง font แล้ว ใส่ตรงนี้ได้)
+        ),
+
+        // --- หน้าแรกที่จะแสดง ---
+        home: AuthenticationWrapper(),
       ),
     );
+  }
+}
+
+// Widget ตัวตัดสินใจว่าจะพาไปหน้าไหน (Gatekeeper)
+class AuthenticationWrapper extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // ดึงค่า User ปัจจุบันมาจาก Provider
+    final firebaseUser = Provider.of<User?>(context);
+
+    // เช็คสถานะ
+    if (firebaseUser != null) {
+      // ถ้ามี User (Login แล้ว) -> ไปหน้า Home
+      return HomeScreen();
+    }
+
+    // ถ้าไม่มี User (ยังไม่ Login) -> ไปหน้า Login
+    return LoginScreen();
   }
 }
