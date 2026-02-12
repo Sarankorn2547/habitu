@@ -34,9 +34,16 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
+  font_awesome_flutter: ^10.7.0
   firebase_core: ^4.4.0
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
+  provider: ^6.1.1
+  intl: ^0.20.2 # จำเป็น: สำหรับจัดการวันที่/เวลา (หน้า Timeline/History)
+  uuid: ^4.3.3  # แนะนำ: สำหรับสร้าง ID ของ Task หรือ Logs ต่างๆ ให้ไม่ซ้ำกัน
+  percent_indicator: ^4.2.3 # แนะนำอย่างยิ่ง: ใช้ทำหลอด EXP, HP, Focus Bar ง่ายและสวยมาก
+  fl_chart: ^1.1.1 # แนะนำ: สำหรับทำกราฟโชว์ Stat ในหน้า Homepage หรือหน้า Workout
+  google_fonts: ^8.0.1 # แนะนำ: เพื่อให้ฟอนต์ในแอปสวยงามและดูทันสมัย
 
 dev_dependencies:
   flutter_test:
