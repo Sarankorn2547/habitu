@@ -5,6 +5,8 @@ import '../services/database_service.dart';
 import '../models/avatar_model.dart';
 import 'workout_screen.dart';
 import 'settings_screen.dart';
+import 'pomodoro_screen.dart';
+import 'sleep_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -72,20 +74,31 @@ class HomeScreen extends StatelessWidget {
                   crossAxisCount: 3,
                   padding: EdgeInsets.all(10),
                   children: [
+                    // Focus button
                     _buildMenuButton(
                       context,
                       Icons.timer,
                       "Focus",
                       Colors.blue,
-                      null,
-                    ), // Link to Focus Page
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => PomodoroPage()),
+                      ),
+                    ),
+
+                    // Sleep button
                     _buildMenuButton(
                       context,
                       Icons.bed,
                       "Sleep",
                       Colors.indigo,
-                      null,
-                    ), // Link to Sleep Page
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => SleepPage()),
+                      ),
+                    ),
+
+                    // Workout button
                     _buildMenuButton(
                       context,
                       Icons.fitness_center,

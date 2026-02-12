@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false, // ปิดป้าย Debug มุมขวาบน
-        title: 'Habitu', // ชื่อแอป
+        title: 'Habit U', // ชื่อแอป
         // --- Theme Setting (Material 3) ---
         theme: ThemeData(
           useMaterial3: true, // ใช้ดีไซน์แบบใหม่
@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
                 Colors.orange, // สีหลักของแอป (เข้ากับธีมสัตว์เลี้ยง/พลังงาน)
             brightness: Brightness.light,
           ),
-          fontFamily: 'GoogleSans', // (ถ้าคุณลง font แล้ว ใส่ตรงนี้ได้)
+          fontFamily: 'monospace', // (ถ้าคุณลง font แล้ว ใส่ตรงนี้ได้)
         ),
 
         // --- หน้าแรกที่จะแสดง ---
