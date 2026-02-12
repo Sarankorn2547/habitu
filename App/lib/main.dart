@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
+import 'pomodoro_page.dart';
+import 'sleep_page.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  WidgetsFlutterBinding.ensureInitialized(); //
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  ); //
   runApp(const MyApp());
 }
 
@@ -15,70 +19,111 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Habitu Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'Habit U',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
+        fontFamily: 'monospace', // ใช้ฟอนต์แนวพิมพ์ดีดเพื่อให้เข้ากับ Pixel Art
       ),
-      home: const MyHomePage(title: 'Habitu Firebase Test'),
+      home: const MainMenu(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void addHabit() {
-    FirebaseFirestore.instance
-        .collection('habits')
-        .add({
-          'name': 'อ่านหนังสือ',
-          'status': 'incomplete',
-          'timestamp': FieldValue.serverTimestamp(),
-          'count': _counter, // ลองเก็บเลข Counter ไปด้วยก็ได้ครับ
-        })
-        .then((value) => print("บันทึกข้อมูลสำเร็จ! ID: ${value.id}"))
-        .catchError((error) => print("เกิดข้อผิดพลาด: $error"));
-  }
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-    addHabit(); // กดปุ่มแล้วส่งข้อมูลทันที
-  }
+class MainMenu extends StatelessWidget {
+  const MainMenu({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('กดปุ่มเพื่อส่งข้อมูลไป Firebase:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 40),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "HELLO,",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Text(
+                "SETHAPAT",
+                style: TextStyle(
+                  fontSize: 35,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.purple,
+                ),
+              ),
+              const SizedBox(height: 50),
+
+              // ปุ่มกดไปหน้า Pomodoro (Focustime)
+              _buildMenuButton(
+                context,
+                title: "FOCUSTIME",
+                icon: Icons.hourglass_bottom_rounded,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PomodoroPage(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+
+              _buildMenuButton(
+                context,
+                title: "SLEEP TIME",
+                icon: Icons.bedtime_rounded,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SleepPage()),
+                  );
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment & Send',
-        child: const Icon(Icons.cloud_upload), // เปลี่ยนไอคอนให้ดูสื่อถึง Cloud
+    );
+  }
+
+  // Widget สำหรับสร้างปุ่มเมนูสไตล์เดียวกับหน้า Pomodoro
+  Widget _buildMenuButton(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.black, width: 3),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: const [
+            BoxShadow(color: Colors.black, offset: Offset(5, 5)),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 40, color: Colors.black),
+            const SizedBox(width: 20),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 20),
+          ],
+        ),
       ),
     );
   }
