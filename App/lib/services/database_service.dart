@@ -45,6 +45,7 @@ class DatabaseService {
   // บันทึกการออกกำลังกาย และ อัปเดต Stat
   Future<void> logExerciseAndReward({
     required String type,
+    required String category, // Cardio or Weight
     int? duration,
     int? sets,
     int? reps,
@@ -60,6 +61,7 @@ class DatabaseService {
     batch.set(logRef, {
       'user_id': uid,
       'exercise_type': type,
+      'category': category,
       'duration_min': duration ?? 0,
       'sets': sets ?? 0,
       'reps': reps ?? 0,
@@ -73,6 +75,67 @@ class DatabaseService {
       'exp': currentExp + 10,
       'coins': currentCoin + 5,
       'strength': currentStrength + 1,
+    });
+
+    await batch.commit();
+  }
+
+  // บันทึกการทำสมาธิ (Focus)
+  Future<void> logFocus({
+    required int durationMinutes,
+    required String avatarId,
+    required int currentExp,
+    required int currentCoin,
+    required int currentFocus,
+  }) async {
+    WriteBatch batch = FirebaseFirestore.instance.batch();
+
+    // 1. Log Focus
+    DocumentReference logRef =
+        FirebaseFirestore.instance.collection('focus_logs').doc();
+    batch.set(logRef, {
+      'user_id': uid,
+      'duration_min': durationMinutes,
+      'exp_gained': 5 * (durationMinutes ~/ 5), // 5 exp per 5 mins
+      'logged_at': FieldValue.serverTimestamp(),
+    });
+
+    // 2. Update Avatar
+    DocumentReference avatarRef = avatarCollection.doc(avatarId);
+    batch.update(avatarRef, {
+      'exp': currentExp + (5 * (durationMinutes ~/ 5)),
+      'coins': currentCoin + (2 * (durationMinutes ~/ 5)),
+      'focus': currentFocus + 1,
+    });
+
+    await batch.commit();
+  }
+
+  // บันทึกการนอน (Sleep)
+  Future<void> logSleep({
+    required int durationSeconds,
+    required String avatarId,
+    required int currentExp,
+    required int currentCoin,
+  }) async {
+    WriteBatch batch = FirebaseFirestore.instance.batch();
+
+    // 1. Log Sleep
+    DocumentReference logRef =
+        FirebaseFirestore.instance.collection('sleep_logs').doc();
+    int minutes = durationSeconds ~/ 60;
+    batch.set(logRef, {
+      'user_id': uid,
+      'duration_sec': durationSeconds,
+      'exp_gained': minutes, // 1 exp per minute
+      'logged_at': FieldValue.serverTimestamp(),
+    });
+
+    // 2. Update Avatar
+    DocumentReference avatarRef = avatarCollection.doc(avatarId);
+    batch.update(avatarRef, {
+      'exp': currentExp + minutes,
+      'coins': currentCoin + (minutes ~/ 2), // 1 coin per 2 minutes
     });
 
     await batch.commit();
