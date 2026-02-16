@@ -72,7 +72,13 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Text("💰", style: TextStyle(fontSize: 16)),
+                    Image.asset(
+                      "assets/icons/money_bag.png",
+                      width: 20,
+                      height: 20,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.none,
+                    ),
                     SizedBox(width: 4),
                     Text(
                       "${avatar.coins}",
@@ -124,28 +130,28 @@ class HomeScreen extends StatelessWidget {
                       "EXP",
                       petExpPct,
                       Colors.greenAccent.shade400,
-                      "${avatar.exp}/${LevelService.getExpToNextLevel(avatar.level)}",
+                      "Lv.${avatar.intelligence} ${avatar.exp}/${LevelService.getExpToNextLevel(avatar.level)}",
                     ),
                     SizedBox(height: 10),
                     _buildStatBar(
                       "INT",
                       intExpPct,
                       Colors.blueAccent.shade200,
-                      "Dv.${avatar.intelligence}",
+                      "Lv.${avatar.intelligence} ${avatar.intelligenceExp}/${LevelService.getExpToNextLevel(avatar.intelligence)}",
                     ),
                     SizedBox(height: 10),
                     _buildStatBar(
                       "MND",
                       mindExpPct,
                       Colors.indigoAccent.shade200,
-                      "Lv.${avatar.mind}",
+                      "Lv.${avatar.mind} ${avatar.mindExp}/${LevelService.getExpToNextLevel(avatar.mind)}",
                     ),
                      SizedBox(height: 10),
                     _buildStatBar(
                       "STR",
                       strExpPct,
                       Colors.redAccent.shade200,
-                      "Lv.${avatar.strength}",
+                      "Lv.${avatar.strength} ${avatar.strengthExp}/${LevelService.getExpToNextLevel(avatar.strength)}",
                     ),
                   ],
                 ),
@@ -165,7 +171,7 @@ class HomeScreen extends StatelessWidget {
                       // Focus button
                       _buildMenuButton(
                         context,
-                        "⏱️",
+                        "assets/icons/clock.png",
                         "FOCUS",
                         Colors.blue.shade50,
                         Colors.blue,
@@ -180,7 +186,7 @@ class HomeScreen extends StatelessWidget {
                       // Sleep button
                       _buildMenuButton(
                         context,
-                        "😴",
+                        "assets/icons/crescent_moon.png",
                         "SLEEP",
                         Colors.indigo.shade50,
                         Colors.indigo,
@@ -195,7 +201,7 @@ class HomeScreen extends StatelessWidget {
                       // Workout button
                       _buildMenuButton(
                         context,
-                        "💪",
+                        "assets/icons/dumbbell.png",
                         "WORKOUT",
                         Colors.orange.shade50,
                         Colors.orange,
@@ -208,7 +214,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       _buildMenuButton(
                         context,
-                        "👕",
+                        "assets/icons/shirt.png",
                         "STYLE",
                         Colors.purple.shade50,
                         Colors.purple,
@@ -216,7 +222,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       _buildMenuButton(
                         context,
-                        "🏆",
+                        "assets/icons/trophy.png",
                         "AWARDS",
                         Colors.amber.shade50,
                         Colors.amber,
@@ -224,7 +230,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       _buildMenuButton(
                         context,
-                        "⚙️",
+                        "assets/icons/gear.png",
                         "SETTINGS",
                         Colors.grey.shade50,
                         Colors.grey,
@@ -304,7 +310,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildMenuButton(
     BuildContext context,
-    String emoji,
+    String iconPath,
     String label,
     Color bgColor,
     Color borderColor,
@@ -325,7 +331,13 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: TextStyle(fontSize: 32)),
+             Image.asset(
+              iconPath,
+              width: 40,
+              height: 40,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.none,
+            ),
             SizedBox(height: 8),
             Text(
               label,
