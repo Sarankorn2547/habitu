@@ -5,8 +5,8 @@ import '../services/database_service.dart';
 import '../models/avatar_model.dart';
 import 'workout_screen.dart';
 import 'settings_screen.dart';
-import '../pomodoro_page.dart';
-import '../sleep_page.dart';
+import 'pomodoro_screen.dart';
+import 'sleep_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   @override

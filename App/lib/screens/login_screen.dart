@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // import เพื่อใช้ UserCredential type (ถ้าจำเป็น)
-import '../../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -8,160 +8,274 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final AuthService _auth = AuthService();
+  // 0 = Login, 1 = Register
+  int _selectedIndex = 0;
+  
   final _emailController = TextEditingController();
   final _passController = TextEditingController();
+  final _confirmPassController = TextEditingController();
 
-  // สถานะ: true = กำลัง Login, false = กำลังสมัครสมาชิก
-  bool _isLogin = true;
-  // สถานะ: กำลังโหลดข้อมูลจาก Firebase หรือไม่
   bool _isLoading = false;
+  bool _obscurePassword = true;
 
-  // ฟังก์ชันสำหรับกดปุ่ม Submit
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passController.dispose();
+    _confirmPassController.dispose();
+    super.dispose();
+  }
+
+  // Action: Submit Form
   Future<void> _submitForm() async {
-    // 1. ตรวจสอบว่ากรอกข้อมูลครบไหม
-    if (_emailController.text.isEmpty || _passController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please fill in email and password")),
-      );
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final email = _emailController.text.trim();
+    final password = _passController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      _showError("Please fill in all fields");
       return;
     }
 
-    // 2. เริ่มโหลด (หมุนๆ)
-    setState(() {
-      _isLoading = true;
-    });
+    // Check Confirm Password for Register
+    if (_selectedIndex == 1) {
+      if (password != _confirmPassController.text.trim()) {
+        _showError("Passwords do not match");
+        return;
+      }
+    }
+
+    setState(() => _isLoading = true);
 
     try {
-      if (_isLogin) {
-        // --- โหมด Login ---
-        final user = await _auth.signIn(
-          _emailController.text.trim(),
-          _passController.text.trim(),
-        );
+      if (_selectedIndex == 0) {
+        // --- LOGIN ---
+        final user = await authService.signIn(email, password);
         if (user == null) {
-          throw Exception("Login failed. Check your email/password.");
+          throw Exception("Login failed. Please check your email and password.");
         }
       } else {
-        // --- โหมด Register ---
-        final user = await _auth.signUp(
-          _emailController.text.trim(),
-          _passController.text.trim(),
-        );
+        // --- REGISTER ---
+        final user = await authService.signUp(email, password);
         if (user == null) {
           throw Exception("Registration failed. Please try again.");
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Account Created! Logging in...")),
+            SnackBar(content: Text("Account created! Logging you in...")),
           );
         }
       }
-      // ถ้าสำเร็จ Stream ใน main.dart จะพาไปหน้า Home เอง
+      // Successful login/register will trigger stream in main.dart to redirect
     } catch (e) {
-      // ถ้ามี Error ให้โชว์ SnackBar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-      );
+      _showError(e.toString());
     } finally {
-      // 3. หยุดโหลด (ไม่ว่าจะสำเร็จหรือล้มเหลว)
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
+  // Action: Forgot Password
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      _showError("Please enter your email to reset password");
+      return;
+    }
+    
+    try {
+      await Provider.of<AuthService>(context, listen: false).sendPasswordResetEmail(email);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Password reset link sent to $email"),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      _showError("Failed to send reset email: ${e.toString()}");
+    }
+  }
+
+  void _showError(String message) {
+    if (message.isEmpty) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isLogin = _selectedIndex == 0;
+
     return Scaffold(
-      // ใช้ Center และ SingleChildScrollView เพื่อไม่ให้คีย์บอร์ดบังช่องกรอก
+      backgroundColor: colorScheme.surface,
       body: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.all(24),
+          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Logo หรือ Icon
-              Icon(Icons.pets, size: 80, color: Colors.orange),
-              SizedBox(height: 20),
-
-              // Title
+              // --- Header ---
+              Icon(Icons.emoji_events_rounded, size: 80, color: colorScheme.primary),
+              SizedBox(height: 16),
               Text(
-                _isLogin ? "Welcome Back!" : "Create Account",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                "HABIT U",
+                textAlign: TextAlign.center,
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: colorScheme.primary,
+                  letterSpacing: 1.2,
+                ),
               ),
-              SizedBox(height: 30),
+              Text(
+                "Level up your life",
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              SizedBox(height: 48),
 
-              // Email Input
+              // --- Title (Optional, showing current mode) ---
+              Text(
+                isLogin ? "Welcome Back" : "Create Account",
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              SizedBox(height: 24),
+
+              // --- Email ---
               TextField(
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   labelText: "Email",
-                  prefixIcon: Icon(Icons.email),
+                  hintText: "hero@example.com",
+                  prefixIcon: Icon(Icons.email_outlined),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
                   ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLowest,
                 ),
-                keyboardType: TextInputType.emailAddress,
               ),
-              SizedBox(height: 15),
+              SizedBox(height: 16),
 
-              // Password Input
+              // --- Password ---
               TextField(
                 controller: _passController,
+                obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   labelText: "Password",
-                  prefixIcon: Icon(Icons.lock),
+                  prefixIcon: Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerLowest,
+                ),
+              ),
+
+              // --- Confirm Password (Register Only) ---
+              if (!isLogin) ...[
+                SizedBox(height: 16),
+                TextField(
+                  controller: _confirmPassController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: "Confirm Password",
+                    prefixIcon: Icon(Icons.lock_reset),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    filled: true,
+                    fillColor: colorScheme.surfaceContainerLowest,
                   ),
                 ),
-                obscureText: true,
-              ),
-              SizedBox(height: 25),
+              ],
 
-              // Main Button (Login / Register)
+              SizedBox(height: 32),
+
+              // --- Action Button ---
               SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                height: 56,
+                child: FilledButton(
+                  onPressed: _isLoading ? null : _submitForm,
+                  style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  onPressed: _isLoading
-                      ? null
-                      : _submitForm, // ถ้าโหลดอยู่ ห้ามกดซ้ำ
                   child: _isLoading
-                      ? CircularProgressIndicator(
-                          color: Colors.white,
-                        ) // โชว์ตัวหมุนถ้าโหลด
+                      ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: colorScheme.onPrimary,
+                            strokeWidth: 2.5,
+                          ),
+                        )
                       : Text(
-                          _isLogin ? "Login" : "Register",
-                          style: TextStyle(fontSize: 18, color: Colors.white),
+                          isLogin ? "Login" : "Sign Up",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
 
-              SizedBox(height: 15),
+              SizedBox(height: 16),
 
-              // Toggle Button (สลับโหมด)
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _isLogin = !_isLogin; // สลับค่า true <-> false
-                  });
-                },
-                child: Text(
-                  _isLogin
-                      ? "Don't have an account? Register"
-                      : "Already have an account? Login",
-                  style: TextStyle(color: Colors.grey[700]),
+              // --- Bottom Links ---
+              if (isLogin)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _selectedIndex = 1; // Switch to Register
+                          _showError(""); // Clear errors
+                        });
+                      },
+                      child: Text("Register"),
+                    ),
+                    TextButton(
+                      onPressed: _forgotPassword,
+                      child: Text("Forgot Password?"),
+                    ),
+                  ],
+                )
+              else
+                // Back to Login link for Register mode
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedIndex = 0; // Switch to Login
+                        _showError(""); // Clear errors
+                      });
+                    },
+                    child: Text("Already have an account? Login"),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
