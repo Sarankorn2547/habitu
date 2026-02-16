@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/database_service.dart';
 import '../models/avatar_model.dart';
+import 'dart:async';
 
 class WorkoutScreen extends StatefulWidget {
   final AvatarModel avatar;
@@ -12,21 +13,97 @@ class WorkoutScreen extends StatefulWidget {
   _WorkoutScreenState createState() => _WorkoutScreenState();
 }
 
+
+
 class _WorkoutScreenState extends State<WorkoutScreen> {
+  // Category Selection
+  String _selectedCategory = 'Cardio'; // 'Cardio' or 'Weight'
   String _selectedType = 'Running';
+
+  // Inputs
   final _durationController = TextEditingController();
   final _setsController = TextEditingController();
   final _repsController = TextEditingController();
 
+  // Timer Logic
+  Timer? _timer;
+  int _elapsedSeconds = 0;
+  bool _isTimerRunning = false;
+  bool _isTimerMode = false; // Toggle for Cardio: Manual vs Timer
+
+  final Map<String, String> _exerciseEmojis = {
+    'Running': '🏃',
+    'Cycling': '🚴',
+    'Swimming': '🏊',
+    'Push Up': '💪',
+    'Sit Up': '🧘',
+    'Weight Lifting': '🏋️',
+    'Other': '🤸',
+  };
+
   final List<String> _cardioTypes = ['Running', 'Cycling', 'Swimming'];
-  final List<String> _strengthTypes = [
+  final List<String> _weightTypes = [
     'Push Up',
     'Sit Up',
     'Weight Lifting',
     'Other',
   ];
 
-  bool get _isCardio => _cardioTypes.contains(_selectedType);
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _durationController.dispose();
+    _setsController.dispose();
+    _repsController.dispose();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    setState(() {
+      _isTimerRunning = true;
+    });
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _elapsedSeconds++;
+      });
+    });
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    setState(() {
+      _isTimerRunning = false;
+      // Auto-fill duration in minutes (round up)
+      int minutes = (_elapsedSeconds / 60).ceil();
+      if (minutes == 0 && _elapsedSeconds > 0) minutes = 1;
+      _durationController.text = minutes.toString();
+    });
+  }
+
+  void _resetTimer() {
+    _stopTimer();
+    setState(() {
+      _elapsedSeconds = 0;
+      _durationController.clear();
+    });
+  }
+
+  String _formatTime(int seconds) {
+    int minutes = seconds ~/ 60;
+    int remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
+  }
+
+  void _updateCategory(String category) {
+    setState(() {
+      _selectedCategory = category;
+      // Reset selected type based on category
+      _selectedType = category == 'Cardio' ? _cardioTypes.first : _weightTypes.first;
+      // Reset inputs
+      _resetTimer();
+      _isTimerMode = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,92 +111,137 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final dbService = DatabaseService(uid: user!.uid);
 
     return Scaffold(
-      appBar: AppBar(title: Text("Log Workout")),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.chevron_left, color: Colors.purple, size: 40),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          "LOG WORKOUT",
+          style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2),
+        ),
+        centerTitle: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(24.0),
         child: Column(
           children: [
-            // 1. เลือกประเภทกีฬา
-            DropdownButtonFormField<String>(
-              value: _selectedType,
-              items: [..._cardioTypes, ..._strengthTypes].map((type) {
-                return DropdownMenuItem(value: type, child: Text(type));
-              }).toList(),
-              onChanged: (val) {
-                setState(() {
-                  _selectedType = val!;
-                });
-              },
-              decoration: InputDecoration(labelText: "Exercise Type"),
+            // Category Toggle
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Row(
+                children: [
+                  _buildCategoryButton('Cardio', Icons.directions_run),
+                  _buildCategoryButton('Weight', Icons.fitness_center),
+                ],
+              ),
+            ),
+            SizedBox(height: 30),
+
+            // Exercise Icon
+            Container(
+              height: 120, // Slightly smaller
+              width: 120,
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.orange, width: 3),
+              ),
+              child: Center(
+                child: Text(
+                  _exerciseEmojis[_selectedType] ?? '🤸',
+                  style: TextStyle(fontSize: 60),
+                ),
+              ),
             ),
             SizedBox(height: 20),
 
-            // 2. ฟอร์มกรอกข้อมูล เปลี่ยนตามประเภท
-            if (_isCardio) ...[
-              TextFormField(
-                controller: _durationController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: "Duration (Minutes)",
-                  icon: Icon(Icons.timer),
-                  border: OutlineInputBorder(),
+            // Exercise Dropdown
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.grey.shade300, width: 2),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedType,
+                  isExpanded: true,
+                  icon: Icon(Icons.arrow_drop_down_circle, color: Colors.orange),
+                  items: (_selectedCategory == 'Cardio' ? _cardioTypes : _weightTypes)
+                      .map((type) {
+                    return DropdownMenuItem(
+                      value: type,
+                      child: Text(
+                        type,
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedType = val!;
+                    });
+                  },
                 ),
               ),
-            ] else ...[
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _setsController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: "Sets",
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: TextFormField(
-                      controller: _repsController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: "Reps",
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                controller:
-                    _durationController, // ยังให้กรอกเวลาได้เผื่ออยากบันทึก
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: "Total Duration (Optional)",
-                  icon: Icon(Icons.timer),
-                ),
-              ),
-            ],
-
+            ),
             SizedBox(height: 30),
 
-            // 3. ปุ่ม Save
+            // Dynamic Content based on Category
+            if (_selectedCategory == 'Cardio') _buildCardioContent()
+            else _buildWeightContent(),
+
+            SizedBox(height: 40),
+
+            // Save Button
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 60,
               child: ElevatedButton.icon(
-                icon: Icon(Icons.save),
-                label: Text("Finish & Get Rewards"),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+                icon: Icon(Icons.check_circle, color: Colors.white),
+                label: Text(
+                  "FINISH & GET REWARDS",
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 5,
+                ),
                 onPressed: () async {
+                   if (_isTimerRunning) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Please stop the timer first!"))
+                      );
+                      return;
+                   }
+
                   // Validate inputs
-                  if (_isCardio && _durationController.text.isEmpty) return;
-                  if (!_isCardio &&
-                      (_setsController.text.isEmpty ||
-                          _repsController.text.isEmpty))
+                  if (_selectedCategory == 'Cardio' && _durationController.text.isEmpty) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Please enter duration"))
+                      );
                     return;
+                  }
+                  if (_selectedCategory == 'Weight' && _repsController.text.isEmpty) {
+                     ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Please enter reps"))
+                      );
+                    return;
+                  }
 
                   int duration = int.tryParse(_durationController.text) ?? 0;
                   int sets = int.tryParse(_setsController.text) ?? 0;
@@ -127,6 +249,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
                   await dbService.logExerciseAndReward(
                     type: _selectedType,
+                    category: _selectedCategory,
                     duration: duration,
                     sets: sets,
                     reps: reps,
@@ -137,14 +260,211 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   );
 
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Great Job! Pet Stats Updated!")),
-                  );
+                  _showRewardDialog(context);
                 },
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryButton(String category, IconData icon) {
+    bool isSelected = _selectedCategory == category;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _updateCategory(category),
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.orange : Colors.transparent,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: isSelected ? Colors.white : Colors.grey),
+              SizedBox(width: 8),
+              Text(
+                category,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardioContent() {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Manual Input", style: TextStyle(color: Colors.grey)),
+            Switch(
+              value: _isTimerMode,
+              activeColor: Colors.orange,
+              onChanged: (val) {
+                setState(() {
+                   _isTimerMode = val;
+                   if (!_isTimerMode) _stopTimer();
+                });
+              },
+            ),
+            Text("Timer Mode", style: TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+        SizedBox(height: 10),
+        if (_isTimerMode) ...[
+          Text(
+            _formatTime(_elapsedSeconds),
+            style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+          ),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (!_isTimerRunning)
+              FloatingActionButton(
+                heroTag: "start",
+                backgroundColor: Colors.green,
+                onPressed: _startTimer,
+                child: Icon(Icons.play_arrow),
+              ),
+              if (_isTimerRunning)
+              FloatingActionButton(
+                heroTag: "stop",
+                backgroundColor: Colors.red,
+                onPressed: _stopTimer,
+                child: Icon(Icons.stop),
+              ),
+              SizedBox(width: 20),
+              FloatingActionButton(
+                heroTag: "reset",
+                backgroundColor: Colors.grey,
+                onPressed: _resetTimer,
+                child: Icon(Icons.refresh),
+              ),
+            ],
+          ),
+        ] else ...[
+          _buildInputLabel("DURATION (MINUTES)"),
+          _buildTextField(_durationController, Icons.timer_outlined),
+        ]
+      ],
+    );
+  }
+
+  Widget _buildWeightContent() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInputLabel("SETS (OPTIONAL)"),
+                  _buildTextField(_setsController, Icons.repeat),
+                ],
+              ),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInputLabel("REPS"),
+                  _buildTextField(_repsController, Icons.numbers),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInputLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+      child: Text(
+        label,
+        style: TextStyle(
+            fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, IconData icon) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade100,
+            blurRadius: 5,
+            offset: Offset(0, 2),
+          )
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        keyboardType: TextInputType.number,
+        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        decoration: InputDecoration(
+          prefixIcon: Icon(icon, color: Colors.grey),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: 2),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(15),
+            borderSide: BorderSide(color: Colors.orange, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.grey.shade50,
+          contentPadding: EdgeInsets.symmetric(vertical: 16),
+        ),
+      ),
+    );
+  }
+
+  void _showRewardDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("GREAT JOB!",
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("🎉", style: TextStyle(fontSize: 60)),
+            SizedBox(height: 10),
+            Text("Pet stats successfully updated!", textAlign: TextAlign.center),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("AWESOME",
+                style:
+                    TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async'; // ต้อง import ตัวนี้เพื่อใช้ Timer
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'services/database_service.dart';
+import 'models/avatar_model.dart';
 
 class PomodoroPage extends StatefulWidget {
-  const PomodoroPage({super.key});
+  final AvatarModel avatar;
+  const PomodoroPage({super.key, required this.avatar});
 
   @override
   State<PomodoroPage> createState() => _PomodoroPageState();
@@ -53,15 +58,47 @@ class _PomodoroPageState extends State<PomodoroPage> {
   }
 
   void _showTimeUpDialog() {
+    // Log Data to Firebase
+    final user = Provider.of<User?>(context, listen: false);
+    if (user != null) {
+      final dbService = DatabaseService(uid: user.uid);
+      dbService.logFocus(
+        durationMinutes: settingTime,
+        avatarId: widget.avatar.id,
+        currentExp: widget.avatar.exp,
+        currentCoin: widget.avatar.coins,
+        currentFocus: widget.avatar.focus,
+      );
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Time's Up!"),
-        content: const Text("ได้เวลาพักผ่อนแล้วครับ"),
+        title: const Text("TIMEOVER!"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "🎉",
+              style: TextStyle(fontSize: 50),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "You successfully focused for $settingTime minutes!",
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "+ EXP & Coins earned!",
+              style:
+                  TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
+            child: const Text("GREAT!"),
           ),
         ],
       ),

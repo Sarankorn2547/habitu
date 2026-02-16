@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'services/database_service.dart';
+import 'models/avatar_model.dart';
 
 class SleepPage extends StatefulWidget {
-  const SleepPage({super.key});
+  final AvatarModel avatar;
+  const SleepPage({super.key, required this.avatar});
 
   @override
   State<SleepPage> createState() => _SleepPageState();
@@ -29,7 +34,59 @@ class _SleepPageState extends State<SleepPage> {
     } else {
       // หยุดนับเวลา
       _timer?.cancel();
+      _handleWakeUp();
     }
+  }
+
+  Future<void> _handleWakeUp() async {
+    // Log Data
+    final user = Provider.of<User?>(context, listen: false);
+    if (user != null) {
+      final dbService = DatabaseService(uid: user.uid);
+      await dbService.logSleep(
+        durationSeconds: secondsPassed,
+        avatarId: widget.avatar.id,
+        currentExp: widget.avatar.exp,
+        currentCoin: widget.avatar.coins,
+      );
+    }
+
+    // Show Dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("GOOD MORNING!"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("☀️", style: TextStyle(fontSize: 50)),
+            const SizedBox(height: 10),
+            Text(
+              "You slept for ${formatTime(secondsPassed)}",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              "+ EXP & Coins recovered!",
+              style:
+                  TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                secondsPassed = 0; // Reset for next sleep
+              });
+            },
+            child: const Text("AWAKE"),
+          ),
+        ],
+      ),
+    );
   }
 
   // แปลงวินาทีเป็นรูปแบบ HH:mm:ss (เช่น 00:22:00)
