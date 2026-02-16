@@ -46,8 +46,7 @@ class _SleepPageState extends State<SleepPage> {
       await dbService.logSleep(
         durationSeconds: secondsPassed,
         avatarId: widget.avatar.id,
-        currentExp: widget.avatar.exp,
-        currentCoin: widget.avatar.coins,
+        currentAvatar: widget.avatar,
       );
     }
 

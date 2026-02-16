@@ -254,9 +254,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                     sets: sets,
                     reps: reps,
                     avatarId: widget.avatar.id,
-                    currentExp: widget.avatar.exp,
-                    currentCoin: widget.avatar.coins,
-                    currentStrength: widget.avatar.strength,
+                    currentAvatar: widget.avatar,
                   );
 
                   Navigator.pop(context);

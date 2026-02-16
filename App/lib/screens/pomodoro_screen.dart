@@ -65,9 +65,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
       dbService.logFocus(
         durationMinutes: settingTime,
         avatarId: widget.avatar.id,
-        currentExp: widget.avatar.exp,
-        currentCoin: widget.avatar.coins,
-        currentFocus: widget.avatar.focus,
+        currentAvatar: widget.avatar,
       );
     }
 

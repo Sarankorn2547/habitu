@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/database_service.dart';
+import '../services/level_service.dart';
 import '../models/avatar_model.dart';
 import 'workout_screen.dart';
 import 'settings_screen.dart';
@@ -20,7 +21,7 @@ class HomeScreen extends StatelessWidget {
         if (snapshot.connectionState == ConnectionState.waiting)
           return Center(child: CircularProgressIndicator());
 
-        // ถ้ายังไม่มี Avatar (User ใหม่) ให้สร้างก่อน (ในโค้ดจริงควรไปหน้า create character)
+        // Create initial avatar if not exists
         if (!snapshot.hasData) {
           dbService.createInitialAvatar("My Pet");
           return Center(child: Text("Creating Pet..."));
@@ -28,18 +29,37 @@ class HomeScreen extends StatelessWidget {
 
         AvatarModel avatar = snapshot.data!;
 
+        // Calculate Progress
+        double petExpPct = avatar.exp / LevelService.getExpToNextLevel(avatar.level);
+        double intExpPct = avatar.intelligenceExp / LevelService.getExpToNextLevel(avatar.intelligence);
+        double mindExpPct = avatar.mindExp / LevelService.getExpToNextLevel(avatar.mind);
+        double strExpPct = avatar.strengthExp / LevelService.getExpToNextLevel(avatar.strength);
+
         return Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: Text(
-              "LV.${avatar.level} ${avatar.name.toUpperCase()}",
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.5,
-              ),
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "LV.${avatar.level} ${avatar.name.toUpperCase()}",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                Text(
+                  "HP ${avatar.level * 10}/${avatar.level * 10}",
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
             actions: [
               Container(
@@ -74,7 +94,7 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Placeholder รูปสัตว์เลี้ยง (Emoji)
+                    // Placeholder Pet Image
                     Container(
                       width: 180,
                       height: 180,
@@ -102,20 +122,30 @@ class HomeScreen extends StatelessWidget {
                     // Stats Bars
                     _buildStatBar(
                       "EXP",
-                      avatar.exp / 100.0,
+                      petExpPct,
                       Colors.greenAccent.shade400,
-                    ), // สมมติ max exp = 100
-                    SizedBox(height: 10),
-                    _buildStatBar(
-                      "STR",
-                      avatar.strength / 50.0,
-                      Colors.redAccent.shade200,
+                      "${avatar.exp}/${LevelService.getExpToNextLevel(avatar.level)}",
                     ),
                     SizedBox(height: 10),
                     _buildStatBar(
-                      "FOC",
-                      avatar.focus / 50.0,
+                      "INT",
+                      intExpPct,
                       Colors.blueAccent.shade200,
+                      "Dv.${avatar.intelligence}",
+                    ),
+                    SizedBox(height: 10),
+                    _buildStatBar(
+                      "MND",
+                      mindExpPct,
+                      Colors.indigoAccent.shade200,
+                      "Lv.${avatar.mind}",
+                    ),
+                     SizedBox(height: 10),
+                    _buildStatBar(
+                      "STR",
+                      strExpPct,
+                      Colors.redAccent.shade200,
+                      "Lv.${avatar.strength}",
                     ),
                   ],
                 ),
@@ -214,13 +244,13 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatBar(String label, double pct, Color color) {
+  Widget _buildStatBar(String label, double pct, Color color, String suffix) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Row(
         children: [
           SizedBox(
-            width: 50,
+            width: 40,
             child: Text(
               label,
               style: TextStyle(
@@ -231,21 +261,39 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Container(
-              height: 20,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.grey.shade400),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(9),
-                child: LinearProgressIndicator(
-                  value: pct > 1 ? 1 : pct,
-                  color: color,
-                  backgroundColor: Colors.transparent,
-                  minHeight: 20,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Container(
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(7),
+                    child: LinearProgressIndicator(
+                      value: pct > 1 ? 1 : (pct < 0 ? 0 : pct),
+                      color: color,
+                      backgroundColor: Colors.transparent,
+                      minHeight: 16,
+                    ),
+                  ),
                 ),
+              ],
+            ),
+          ),
+          SizedBox(width: 8),
+          SizedBox(
+            width: 50,
+            child: Text(
+              suffix,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 10,
+                color: Colors.black54,
               ),
             ),
           ),
@@ -256,7 +304,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildMenuButton(
     BuildContext context,
-    String emoji, // Changed from IconData to String for Emoji
+    String emoji,
     String label,
     Color bgColor,
     Color borderColor,
