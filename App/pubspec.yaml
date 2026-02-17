@@ -44,6 +44,7 @@ dependencies:
   percent_indicator: ^4.2.3 # แนะนำอย่างยิ่ง: ใช้ทำหลอด EXP, HP, Focus Bar ง่ายและสวยมาก
   fl_chart: ^1.1.1 # แนะนำ: สำหรับทำกราฟโชว์ Stat ในหน้า Homepage หรือหน้า Workout
   google_fonts: ^8.0.1 # แนะนำ: เพื่อให้ฟอนต์ในแอปสวยงามและดูทันสมัย
+  table_calendar: ^3.2.0
 
 dev_dependencies:
   flutter_test:

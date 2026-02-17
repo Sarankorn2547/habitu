@@ -8,6 +8,7 @@ import 'workout_screen.dart';
 import 'settings_screen.dart';
 import 'pomodoro_screen.dart';
 import 'sleep_screen.dart';
+import 'timeline_page.dart'; // Import หน้า Timeline ที่ปรับปรุงเป็นแบบมีปฏิทินแล้ว
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -19,21 +20,26 @@ class HomeScreen extends StatelessWidget {
       stream: dbService.myAvatar,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting)
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
 
-        // Create initial avatar if not exists
         if (!snapshot.hasData) {
           dbService.createInitialAvatar("My Pet");
-          return Center(child: Text("Creating Pet..."));
+          return const Center(child: Text("Creating Pet..."));
         }
 
         AvatarModel avatar = snapshot.data!;
 
-        // Calculate Progress
-        double petExpPct = avatar.exp / LevelService.getExpToNextLevel(avatar.level);
-        double intExpPct = avatar.intelligenceExp / LevelService.getExpToNextLevel(avatar.intelligence);
-        double mindExpPct = avatar.mindExp / LevelService.getExpToNextLevel(avatar.mind);
-        double strExpPct = avatar.strengthExp / LevelService.getExpToNextLevel(avatar.strength);
+        // คำนวณเปอร์เซ็นต์ Exp ของแต่ละสาย
+        double petExpPct =
+            avatar.exp / LevelService.getExpToNextLevel(avatar.level);
+        double intExpPct =
+            avatar.intelligenceExp /
+            LevelService.getExpToNextLevel(avatar.intelligence);
+        double mindExpPct =
+            avatar.mindExp / LevelService.getExpToNextLevel(avatar.mind);
+        double strExpPct =
+            avatar.strengthExp /
+            LevelService.getExpToNextLevel(avatar.strength);
 
         return Scaffold(
           backgroundColor: Colors.white,
@@ -45,7 +51,7 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Text(
                   "LV.${avatar.level} ${avatar.name.toUpperCase()}",
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.black,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.5,
@@ -53,7 +59,7 @@ class HomeScreen extends StatelessWidget {
                 ),
                 Text(
                   "HP ${avatar.level * 10}/${avatar.level * 10}",
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -61,114 +67,61 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            actions: [
-              Container(
-                margin: EdgeInsets.only(right: 16),
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.amber.shade100,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.amber.shade700, width: 2),
-                ),
-                child: Row(
-                  children: [
-                    Image.asset(
-                      "assets/icons/money_bag.png",
-                      width: 20,
-                      height: 20,
-                      fit: BoxFit.contain,
-                      filterQuality: FilterQuality.none,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      "${avatar.coins}",
-                      style: TextStyle(
-                        color: Colors.amber.shade900,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            actions: [_buildCoinDisplay(avatar.coins)],
           ),
           body: Column(
             children: [
-              // --- Pet Area ---
+              // --- ส่วนแสดงสัตว์เลี้ยง (Pet Area) ---
               Expanded(
                 flex: 4,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Placeholder Pet Image
-                    Container(
-                      width: 180,
-                      height: 180,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                        border:
-                            Border.all(color: Colors.grey.shade300, width: 4),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.shade200,
-                            blurRadius: 10,
-                            offset: Offset(0, 5),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Text(
-                          "🦊", // Placeholder Emoji
-                          style: TextStyle(fontSize: 100),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 30),
-                    // Stats Bars
+                    _buildPetAvatar(),
+                    const SizedBox(height: 25),
                     _buildStatBar(
                       "EXP",
                       petExpPct,
                       Colors.greenAccent.shade400,
-                      "Lv.${avatar.intelligence} ${avatar.exp}/${LevelService.getExpToNextLevel(avatar.level)}",
+                      "Lv.${avatar.level}",
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     _buildStatBar(
                       "INT",
                       intExpPct,
                       Colors.blueAccent.shade200,
-                      "Lv.${avatar.intelligence} ${avatar.intelligenceExp}/${LevelService.getExpToNextLevel(avatar.intelligence)}",
+                      "Lv.${avatar.intelligence}",
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     _buildStatBar(
                       "MND",
                       mindExpPct,
                       Colors.indigoAccent.shade200,
-                      "Lv.${avatar.mind} ${avatar.mindExp}/${LevelService.getExpToNextLevel(avatar.mind)}",
+                      "Lv.${avatar.mind}",
                     ),
-                     SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     _buildStatBar(
                       "STR",
                       strExpPct,
                       Colors.redAccent.shade200,
-                      "Lv.${avatar.strength} ${avatar.strengthExp}/${LevelService.getExpToNextLevel(avatar.strength)}",
+                      "Lv.${avatar.strength}",
                     ),
                   ],
                 ),
               ),
 
-              // --- Menu Grid ---
+              // --- ส่วนเมนูหลัก (Menu Grid) ---
               Expanded(
-                flex: 3,
+                flex: 4,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: GridView.count(
                     crossAxisCount: 3,
                     mainAxisSpacing: 15,
                     crossAxisSpacing: 15,
-                    childAspectRatio: 0.85,
+                    childAspectRatio: 0.9,
                     children: [
-                      // Focus button
+                      // ปุ่ม FOCUS
                       _buildMenuButton(
                         context,
                         "assets/icons/clock.png",
@@ -183,7 +136,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
 
-                      // Sleep button
+                      // ปุ่ม SLEEP
                       _buildMenuButton(
                         context,
                         "assets/icons/crescent_moon.png",
@@ -198,7 +151,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
 
-                      // Workout button
+                      // ปุ่ม WORKOUT
                       _buildMenuButton(
                         context,
                         "assets/icons/dumbbell.png",
@@ -212,22 +165,33 @@ class HomeScreen extends StatelessWidget {
                           ),
                         ),
                       ),
+
+                      // ปุ่ม TIMELINE (รวม History และปฏิทินไว้ด้วยกัน)
+                      _buildMenuButton(
+                        context,
+                        "assets/icons/calendar.png",
+                        "TIMELINE",
+                        Colors.purple.shade50,
+                        Colors.purple,
+                        () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const TimelineCalendarPage(),
+                          ), // เข้าสู่หน้า Timeline แบบมีปฏิทิน
+                        ),
+                      ),
+
+                      // ปุ่มสไตล์ (Coming Soon)
                       _buildMenuButton(
                         context,
                         "assets/icons/shirt.png",
                         "STYLE",
-                        Colors.purple.shade50,
-                        Colors.purple,
+                        Colors.teal.shade50,
+                        Colors.teal,
                         null,
                       ),
-                      _buildMenuButton(
-                        context,
-                        "assets/icons/trophy.png",
-                        "AWARDS",
-                        Colors.amber.shade50,
-                        Colors.amber,
-                        null,
-                      ),
+
+                      // ปุ่มการตั้งค่า
                       _buildMenuButton(
                         context,
                         "assets/icons/gear.png",
@@ -250,57 +214,94 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // --- Widget ส่วนประกอบอื่นๆ (คงเดิม) ---
+  Widget _buildCoinDisplay(int coins) {
+    return Container(
+      margin: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.amber.shade100,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.amber.shade700, width: 2),
+      ),
+      child: Row(
+        children: [
+          Image.asset(
+            "assets/icons/money_bag.png",
+            width: 20,
+            height: 20,
+            filterQuality: FilterQuality.none,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            "$coins",
+            style: TextStyle(
+              color: Colors.amber.shade900,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPetAvatar() {
+    return Container(
+      width: 160,
+      height: 160,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.grey.shade300, width: 4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.shade200,
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: const Center(child: Text("🦊", style: TextStyle(fontSize: 90))),
+    );
+  }
+
   Widget _buildStatBar(String label, double pct, Color color, String suffix) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Row(
         children: [
           SizedBox(
-            width: 40,
+            width: 35,
             child: Text(
               label,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: Colors.black87,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(7),
-                    child: LinearProgressIndicator(
-                      value: pct > 1 ? 1 : (pct < 0 ? 0 : pct),
-                      color: color,
-                      backgroundColor: Colors.transparent,
-                      minHeight: 16,
-                    ),
-                  ),
+            child: Container(
+              height: 14,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(7),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: pct.clamp(0.0, 1.0),
+                  color: color,
+                  backgroundColor: Colors.transparent,
                 ),
-              ],
+              ),
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           SizedBox(
-            width: 50,
+            width: 45,
             child: Text(
               suffix,
               textAlign: TextAlign.end,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 10,
-                color: Colors.black54,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
             ),
           ),
         ],
@@ -321,7 +322,7 @@ class HomeScreen extends StatelessWidget {
           onTap ??
           () => ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text("Coming Soon! 🚧"))),
+          ).showSnackBar(const SnackBar(content: Text("Coming Soon! 🚧"))),
       child: Container(
         decoration: BoxDecoration(
           color: bgColor,
@@ -331,20 +332,18 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-             Image.asset(
+            Image.asset(
               iconPath,
-              width: 40,
-              height: 40,
-              fit: BoxFit.contain,
+              width: 35,
+              height: 35,
               filterQuality: FilterQuality.none,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
+              style: const TextStyle(
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
                 letterSpacing: 0.5,
               ),
             ),
