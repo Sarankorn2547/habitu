@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:rxdart/rxdart.dart';
 
 class TimelineDetailPage extends StatelessWidget {
   final DateTime selectedDate;
@@ -32,30 +33,35 @@ class TimelineDetailPage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('habits')
-            .where('uid', isEqualTo: user?.uid)
-            .where('timestamp', isGreaterThanOrEqualTo: start)
-            .where('timestamp', isLessThan: end)
-            .snapshots(),
+      body: StreamBuilder<Map<String, dynamic>>(
+        stream: _getDailySummary(user?.uid, start, end),
         builder: (context, snapshot) {
-          if (!snapshot.hasData)
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-
-          // Logic การคำนวณเวลา (ตัวอย่าง)
-          double focusSecs = 0;
-          double sleepSecs = 0;
-          List<String> workouts = [];
-
-          for (var doc in snapshot.data!.docs) {
-            String name = doc['name'] ?? '';
-            int duration =
-                doc['duration'] ?? 0; // สมมติว่าเก็บเป็นวินาทีหรือนาที
-            if (name == 'Focus') focusSecs += duration;
-            if (name == 'Sleep') sleepSecs += duration;
-            if (name.contains('Workout')) workouts.add(doc['activity'] ?? '');
           }
+
+          if (snapshot.hasError) {
+            debugPrint("Timeline Error: ${snapshot.error}");
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Text(
+                  "Error loading data.\nPlease check terminal logs for Firestore Index links.",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+            );
+          }
+
+          if (!snapshot.hasData || snapshot.data == null) {
+             return const Center(child: Text("No data for this date"));
+          }
+
+          final data = snapshot.data!;
+          final double focusSecs = data['focusSecs'] ?? 0.0;
+          final double sleepSecs = data['sleepSecs'] ?? 0.0;
+          final List<String> workouts = data['workouts'] ?? [];
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(20),
@@ -70,7 +76,7 @@ class TimelineDetailPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
 
-                // ส่วนแสดงผล Summary Card (ตามภาพดีไซน์ของคุณ)
+                // ส่วนแสดงผล Summary Card
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -114,12 +120,21 @@ class TimelineDetailPage extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      ...workouts.map(
-                        (w) => Text(
-                          "• $w",
-                          style: const TextStyle(color: Colors.white),
+                       if (workouts.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            "- No workouts -",
+                             style: TextStyle(color: Colors.white70),
+                          ),
+                        )
+                      else
+                        ...workouts.map(
+                          (w) => Text(
+                            "• $w",
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -130,6 +145,88 @@ class TimelineDetailPage extends StatelessWidget {
       ),
     );
   }
+
+  Stream<Map<String, dynamic>> _getDailySummary(String? uid, DateTime start, DateTime end) {
+    if (uid == null) return Stream.value({});
+
+    // Query only by user_id to avoid creating composite indexes manually
+    final focusStream = FirebaseFirestore.instance
+        .collection('focus_logs')
+        .where('user_id', isEqualTo: uid)
+        .snapshots();
+
+    final sleepStream = FirebaseFirestore.instance
+        .collection('sleep_logs')
+        .where('user_id', isEqualTo: uid)
+        .snapshots();
+
+    final exerciseStream = FirebaseFirestore.instance
+        .collection('exercise_logs')
+        .where('user_id', isEqualTo: uid)
+        .snapshots();
+
+    return Rx.combineLatest3(
+      focusStream,
+      sleepStream,
+      exerciseStream,
+      (QuerySnapshot focusSn, QuerySnapshot sleepSn, QuerySnapshot exerciseSn) {
+        double focusSecs = 0;
+        double sleepSecs = 0;
+        List<String> workouts = [];
+
+        for (var doc in focusSn.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final timestamp = data['logged_at'] as Timestamp?;
+          if (timestamp == null) continue;
+          
+          final date = timestamp.toDate();
+          if (date.isBefore(start) || date.isAfter(end) || date.isAtSameMomentAs(end)) continue;
+
+          // focus_logs uses 'duration_min'
+          focusSecs += (data['duration_min'] ?? 0) * 60; 
+        }
+
+        for (var doc in sleepSn.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          final timestamp = data['logged_at'] as Timestamp?;
+          if (timestamp == null) continue;
+
+          final date = timestamp.toDate();
+          if (date.isBefore(start) || date.isAfter(end) || date.isAtSameMomentAs(end)) continue;
+
+          // sleep_logs uses 'duration_sec'
+          sleepSecs += (data['duration_sec'] ?? 0);
+        }
+
+        for (var doc in exerciseSn.docs) {
+           final data = doc.data() as Map<String, dynamic>;
+           final timestamp = data['logged_at'] as Timestamp?;
+           if (timestamp == null) continue;
+
+           final date = timestamp.toDate();
+           if (date.isBefore(start) || date.isAfter(end) || date.isAtSameMomentAs(end)) continue;
+
+           String type = data['exercise_type'] ?? 'Unknown';
+           String category = data['category'] ?? '';
+           // Format: "Push Up (30 reps)" or "Running (30 min)"
+           String detail = "";
+           if (category == 'Cardio') {
+             detail = "${data['duration_min'] ?? 0} min";
+           } else {
+             detail = "${data['reps'] ?? 0} reps";
+           }
+           workouts.add("$type ($detail)");
+        }
+        
+        return {
+          'focusSecs': focusSecs,
+          'sleepSecs': sleepSecs,
+          'workouts': workouts,
+        };
+      },
+    );
+  }
+
 
   Widget _buildRow(Color color, String label, String value) {
     return Row(
