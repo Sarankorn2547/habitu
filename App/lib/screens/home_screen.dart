@@ -42,7 +42,7 @@ class HomeScreen extends StatelessWidget {
             LevelService.getExpToNextLevel(avatar.strength);
 
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -261,7 +261,14 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      child: const Center(child: Text("🦊", style: TextStyle(fontSize: 90))),
+      child: Center(
+        child: Image.asset(
+          'assets/images/CAT.png',
+          width: 120,
+          height: 120,
+          fit: BoxFit.contain,
+        ),
+      ),
     );
   }
 
