@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'package:rxdart/rxdart.dart';
 
 class TimelineDetailPage extends StatelessWidget {
   final DateTime selectedDate;
@@ -19,6 +18,28 @@ class TimelineDetailPage extends StatelessWidget {
     );
     DateTime end = start.add(const Duration(days: 1));
 
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text("Please login to view details")),
+      );
+    }
+
+    // Query only by user_id to avoid creating composite indexes manually
+    final focusStream = FirebaseFirestore.instance
+        .collection('focus_logs')
+        .where('user_id', isEqualTo: user.uid)
+        .snapshots();
+
+    final sleepStream = FirebaseFirestore.instance
+        .collection('sleep_logs')
+        .where('user_id', isEqualTo: user.uid)
+        .snapshots();
+
+    final exerciseStream = FirebaseFirestore.instance
+        .collection('exercise_logs')
+        .where('user_id', isEqualTo: user.uid)
+        .snapshots();
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -33,197 +54,186 @@ class TimelineDetailPage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: StreamBuilder<Map<String, dynamic>>(
-        stream: _getDailySummary(user?.uid, start, end),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: StreamBuilder<QuerySnapshot>(
+        stream: focusStream,
+        builder: (context, focusSnapshot) {
+          return StreamBuilder<QuerySnapshot>(
+            stream: sleepStream,
+            builder: (context, sleepSnapshot) {
+              return StreamBuilder<QuerySnapshot>(
+                stream: exerciseStream,
+                builder: (context, exerciseSnapshot) {
+                  // Check for waiting state
+                  if (focusSnapshot.connectionState == ConnectionState.waiting ||
+                      sleepSnapshot.connectionState == ConnectionState.waiting ||
+                      exerciseSnapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-          if (snapshot.hasError) {
-            debugPrint("Timeline Error: ${snapshot.error}");
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Text(
-                  "Error loading data.\nPlease check terminal logs for Firestore Index links.",
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            );
-          }
-
-          if (!snapshot.hasData || snapshot.data == null) {
-             return const Center(child: Text("No data for this date"));
-          }
-
-          final data = snapshot.data!;
-          final double focusSecs = data['focusSecs'] ?? 0.0;
-          final double sleepSecs = data['sleepSecs'] ?? 0.0;
-          final List<String> workouts = data['workouts'] ?? [];
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Text(
-                  DateFormat('d MMM yyyy').format(selectedDate).toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // ส่วนแสดงผล Summary Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade300,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Column(
-                    children: [
-                      _buildRow(
-                        Colors.orange,
-                        "Focus Time",
-                        "${(focusSecs / 3600).toStringAsFixed(1)} Hr",
-                      ),
-                      const SizedBox(height: 10),
-                      _buildRow(
-                        Colors.blue,
-                        "Sleep Time",
-                        "${(sleepSecs / 3600).toStringAsFixed(1)} Hr",
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ส่วนแสดง Workout History
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.purple.shade300,
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Workout History",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                  // Check for errors
+                  if (focusSnapshot.hasError ||
+                      sleepSnapshot.hasError ||
+                      exerciseSnapshot.hasError) {
+                    debugPrint("Timeline Error: Focus:${focusSnapshot.error}, Sleep:${sleepSnapshot.error}, Exercise:${exerciseSnapshot.error}");
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Text(
+                          "Error loading data.\nPlease check terminal logs for Firestore Index links.",
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
-                       if (workouts.isEmpty)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            "- No workouts -",
-                             style: TextStyle(color: Colors.white70),
-                          ),
-                        )
-                      else
-                        ...workouts.map(
-                          (w) => Text(
-                            "• $w",
-                            style: const TextStyle(color: Colors.white),
+                    );
+                  }
+
+                  // Process Data
+                  double focusSecs = 0;
+                  double sleepSecs = 0;
+                  List<String> workouts = [];
+
+                  // Process Focus Logs
+                  if (focusSnapshot.hasData) {
+                    for (var doc in focusSnapshot.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final timestamp = data['logged_at'] as Timestamp?;
+                      if (timestamp == null) continue;
+                      
+                      final date = timestamp.toDate();
+                      if (date.isBefore(start) || date.isAfter(end) || date.isAtSameMomentAs(end)) continue;
+
+                      // focus_logs uses 'duration_min'
+                      focusSecs += (data['duration_min'] ?? 0) * 60; 
+                    }
+                  }
+
+                  // Process Sleep Logs
+                  if (sleepSnapshot.hasData) {
+                    for (var doc in sleepSnapshot.data!.docs) {
+                      final data = doc.data() as Map<String, dynamic>;
+                      final timestamp = data['logged_at'] as Timestamp?;
+                      if (timestamp == null) continue;
+
+                      final date = timestamp.toDate();
+                      if (date.isBefore(start) || date.isAfter(end) || date.isAtSameMomentAs(end)) continue;
+
+                      // sleep_logs uses 'duration_sec'
+                      sleepSecs += (data['duration_sec'] ?? 0);
+                    }
+                  }
+
+                  // Process Exercise Logs
+                  if (exerciseSnapshot.hasData) {
+                    for (var doc in exerciseSnapshot.data!.docs) {
+                       final data = doc.data() as Map<String, dynamic>;
+                       final timestamp = data['logged_at'] as Timestamp?;
+                       if (timestamp == null) continue;
+
+                       final date = timestamp.toDate();
+                       if (date.isBefore(start) || date.isAfter(end) || date.isAtSameMomentAs(end)) continue;
+
+                       String type = data['exercise_type'] ?? 'Unknown';
+                       String category = data['category'] ?? '';
+                       // Format: "Push Up (30 reps)" or "Running (30 min)"
+                       String detail = "";
+                       if (category == 'Cardio') {
+                         detail = "${data['duration_min'] ?? 0} min";
+                       } else {
+                         detail = "${data['reps'] ?? 0} reps";
+                       }
+                       workouts.add("$type ($detail)");
+                    }
+                  }
+
+                  // Check if no data at all (optional, depending on UX preference)
+                  // For now, we always show the UI even if 0, like original code
+                  // But original code had: if (!snapshot.hasData || snapshot.data == null)
+                  // Here we have data but it might be empty list of docs.
+                  
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Text(
+                          DateFormat('d MMM yyyy').format(selectedDate).toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                        const SizedBox(height: 20),
+
+                        // ส่วนแสดงผล Summary Card
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.shade300,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildRow(
+                                Colors.orange,
+                                "Focus Time",
+                                "${(focusSecs / 3600).toStringAsFixed(1)} Hr",
+                              ),
+                              const SizedBox(height: 10),
+                              _buildRow(
+                                Colors.blue,
+                                "Sleep Time",
+                                "${(sleepSecs / 3600).toStringAsFixed(1)} Hr",
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // ส่วนแสดง Workout History
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.purple.shade300,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Workout History",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                               if (workouts.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.only(top: 8.0),
+                                  child: Text(
+                                    "- No workouts -",
+                                     style: TextStyle(color: Colors.white70),
+                                  ),
+                                )
+                              else
+                                ...workouts.map(
+                                  (w) => Text(
+                                    "• $w",
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
           );
         },
       ),
-    );
-  }
-
-  Stream<Map<String, dynamic>> _getDailySummary(String? uid, DateTime start, DateTime end) {
-    if (uid == null) return Stream.value({});
-
-    // Query only by user_id to avoid creating composite indexes manually
-    final focusStream = FirebaseFirestore.instance
-        .collection('focus_logs')
-        .where('user_id', isEqualTo: uid)
-        .snapshots();
-
-    final sleepStream = FirebaseFirestore.instance
-        .collection('sleep_logs')
-        .where('user_id', isEqualTo: uid)
-        .snapshots();
-
-    final exerciseStream = FirebaseFirestore.instance
-        .collection('exercise_logs')
-        .where('user_id', isEqualTo: uid)
-        .snapshots();
-
-    return Rx.combineLatest3(
-      focusStream,
-      sleepStream,
-      exerciseStream,
-      (QuerySnapshot focusSn, QuerySnapshot sleepSn, QuerySnapshot exerciseSn) {
-        double focusSecs = 0;
-        double sleepSecs = 0;
-        List<String> workouts = [];
-
-        for (var doc in focusSn.docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final timestamp = data['logged_at'] as Timestamp?;
-          if (timestamp == null) continue;
-          
-          final date = timestamp.toDate();
-          if (date.isBefore(start) || date.isAfter(end) || date.isAtSameMomentAs(end)) continue;
-
-          // focus_logs uses 'duration_min'
-          focusSecs += (data['duration_min'] ?? 0) * 60; 
-        }
-
-        for (var doc in sleepSn.docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final timestamp = data['logged_at'] as Timestamp?;
-          if (timestamp == null) continue;
-
-          final date = timestamp.toDate();
-          if (date.isBefore(start) || date.isAfter(end) || date.isAtSameMomentAs(end)) continue;
-
-          // sleep_logs uses 'duration_sec'
-          sleepSecs += (data['duration_sec'] ?? 0);
-        }
-
-        for (var doc in exerciseSn.docs) {
-           final data = doc.data() as Map<String, dynamic>;
-           final timestamp = data['logged_at'] as Timestamp?;
-           if (timestamp == null) continue;
-
-           final date = timestamp.toDate();
-           if (date.isBefore(start) || date.isAfter(end) || date.isAtSameMomentAs(end)) continue;
-
-           String type = data['exercise_type'] ?? 'Unknown';
-           String category = data['category'] ?? '';
-           // Format: "Push Up (30 reps)" or "Running (30 min)"
-           String detail = "";
-           if (category == 'Cardio') {
-             detail = "${data['duration_min'] ?? 0} min";
-           } else {
-             detail = "${data['reps'] ?? 0} reps";
-           }
-           workouts.add("$type ($detail)");
-        }
-        
-        return {
-          'focusSecs': focusSecs,
-          'sleepSecs': sleepSecs,
-          'workouts': workouts,
-        };
-      },
     );
   }
 
