@@ -111,7 +111,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     final dbService = DatabaseService(uid: user!.uid);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.chevron_left, color: Colors.purple, size: 40),
