@@ -49,13 +49,23 @@ class HomeScreen extends StatelessWidget {
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "Your Space",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.5,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "${avatar.name} House",
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () => _showRenameDialog(context, dbService, avatar),
+                      child: const Icon(Icons.edit, size: 18, color: Colors.grey),
+                    ),
+                  ],
                 ),
                 Text(
                   "LV.${avatar.level} ${avatar.name.toUpperCase()} (HP ${avatar.level * 10}/${avatar.level * 10})",
@@ -323,6 +333,38 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showRenameDialog(BuildContext context, DatabaseService dbService, AvatarModel avatar) {
+    TextEditingController controller = TextEditingController(text: avatar.name);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Rename Pet"),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(hintText: "Enter new name"),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (controller.text.trim().isNotEmpty) {
+                  await dbService.updateAvatarName(avatar.id, controller.text.trim());
+                }
+                Navigator.pop(context);
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
     );
   }
 }
