@@ -26,6 +26,10 @@ class DatabaseService {
           );
         });
   }
+  // Update Avatar Name
+  Future<void> updateAvatarName(String avatarId, String newName) async {
+    await avatarCollection.doc(avatarId).update({'name': newName});
+  }
 
   // Create Initial Avatar
   Future<void> createInitialAvatar(String name) async {
