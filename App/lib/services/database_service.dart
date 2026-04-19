@@ -242,4 +242,31 @@ class DatabaseService {
 
     await batch.commit();
   }
+
+  // Delete All User Data
+  Future<void> deleteAllUserData() async {
+    // Delete avatars
+    final avatars = await avatarCollection.where('user_id', isEqualTo: uid).get();
+    for (var doc in avatars.docs) {
+      await doc.reference.delete();
+    }
+
+    // Delete exercise logs
+    final exercises = await exerciseCollection.where('user_id', isEqualTo: uid).get();
+    for (var doc in exercises.docs) {
+      await doc.reference.delete();
+    }
+
+    // Delete focus logs
+    final focusLogs = await FirebaseFirestore.instance.collection('focus_logs').where('user_id', isEqualTo: uid).get();
+    for (var doc in focusLogs.docs) {
+      await doc.reference.delete();
+    }
+
+    // Delete sleep logs
+    final sleepLogs = await FirebaseFirestore.instance.collection('sleep_logs').where('user_id', isEqualTo: uid).get();
+    for (var doc in sleepLogs.docs) {
+      await doc.reference.delete();
+    }
+  }
 }
