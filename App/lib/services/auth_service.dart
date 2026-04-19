@@ -41,4 +41,34 @@ class AuthService {
   Future<void> sendPasswordResetEmail(String email) async {
     await _auth.sendPasswordResetEmail(email: email);
   }
+
+  // Update Username
+  Future<void> updateUsername(String newName) async {
+    try {
+      await _auth.currentUser?.updateDisplayName(newName);
+    } catch (e) {
+      print(e.toString());
+      throw e;
+    }
+  }
+
+  // Update Password
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _auth.currentUser?.updatePassword(newPassword);
+    } catch (e) {
+      print(e.toString());
+      throw e;
+    }
+  }
+
+  // Delete Account
+  Future<void> deleteAccount() async {
+    try {
+      await _auth.currentUser?.delete();
+    } catch (e) {
+      print(e.toString());
+      throw e;
+    }
+  }
 }
