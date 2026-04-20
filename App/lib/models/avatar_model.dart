@@ -30,7 +30,7 @@ class AvatarModel {
   int intelligenceExp;
   int mindExp;
   
-  int coins;
+  bool isActive;
 
   AvatarModel({
     required this.id,
@@ -45,7 +45,7 @@ class AvatarModel {
     this.strengthExp = 0,
     this.intelligenceExp = 0,
     this.mindExp = 0,
-    this.coins = 0,
+    this.isActive = false,
     this.selectedStage = 1,
     this.equippedHat = '',
   });
@@ -65,7 +65,7 @@ class AvatarModel {
       strengthExp: data['strength_exp'] ?? 0,
       intelligenceExp: data['intelligence_exp'] ?? 0,
       mindExp: data['mind_exp'] ?? 0,
-      coins: data['coins'] ?? 0,
+      isActive: data['isActive'] ?? true, // Default to true for old data
       selectedStage: data['selectedStage'] ?? 1,
       equippedHat: data['equippedHat'] ?? '',
     );
@@ -85,7 +85,7 @@ class AvatarModel {
       'strength_exp': strengthExp,
       'intelligence_exp': intelligenceExp,
       'mind_exp': mindExp,
-      'coins': coins,
+      'isActive': isActive,
       'selectedStage': selectedStage,
       'equippedHat': equippedHat,
     };

@@ -26,6 +26,13 @@ class _StyleScreenState extends State<StyleScreen> {
     'glasses'
   ];
 
+  List<AvatarModel> ownedPets = [];
+  List<String> unlockedHats = [];
+  int currentCoins = 0;
+  bool isLoading = true;
+
+  final List<String> availableSpecies = ['Cat', 'Dog']; // Scalable for future
+
   @override
   void initState() {
     super.initState();
@@ -33,22 +40,136 @@ class _StyleScreenState extends State<StyleScreen> {
     selectedStage = widget.currentAvatar.selectedStage;
     if (selectedStage < 1) selectedStage = 1;
     equippedHat = widget.currentAvatar.equippedHat;
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    final user = Provider.of<User?>(context, listen: false);
+    if (user != null) {
+      final dbService = DatabaseService(uid: user.uid);
+      var allPetsStream = await dbService.avatarCollection.where('user_id', isEqualTo: user.uid).get();
+      ownedPets = allPetsStream.docs.map((doc) => AvatarModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
+      
+      var userDoc = await dbService.userCollection.doc(user.uid).get();
+      if (userDoc.exists) {
+        var data = userDoc.data() as Map<String, dynamic>;
+        currentCoins = data['coins'] ?? 0;
+        if (data['unlocked_hats'] != null) {
+          unlockedHats = List<String>.from(data['unlocked_hats']);
+        }
+      }
+      
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  AvatarModel? _getOwnedPet(String species) {
+    try {
+      return ownedPets.firstWhere((pet) => pet.species == species);
+    } catch (_) {
+      return null;
+    }
   }
 
   void _saveChanges() async {
     final user = Provider.of<User?>(context, listen: false);
     if (user != null) {
       final dbService = DatabaseService(uid: user.uid);
-      await dbService.updateAvatarStyle(
-        avatarId: widget.currentAvatar.id,
-        species: selectedSpecies,
-        stage: selectedStage,
-        hat: equippedHat,
-      );
+      
+      AvatarModel? selectedPet = _getOwnedPet(selectedSpecies);
+      if (selectedPet != null) {
+        if (selectedPet.id != widget.currentAvatar.id) {
+          await dbService.switchActivePet(selectedPet.id);
+        }
+        await dbService.updateAvatarStyle(
+          avatarId: selectedPet.id,
+          stage: selectedStage,
+          hat: equippedHat,
+        );
+      }
       if (mounted) {
         Navigator.pop(context);
       }
     }
+  }
+
+  void _handleSpeciesTap(String species) {
+    if (_getOwnedPet(species) != null) {
+       setState(() {
+         selectedSpecies = species;
+         selectedStage = _getOwnedPet(species)!.selectedStage;
+         if (selectedStage < 1) selectedStage = 1;
+         equippedHat = _getOwnedPet(species)!.equippedHat;
+       });
+    } else {
+       _promptAdoption(species);
+    }
+  }
+
+  void _promptAdoption(String species) {
+    showDialog(context: context, builder: (_) => AlertDialog(
+      title: Text("Adopt $species?"),
+      content: Text("It costs 500 coins to unlock this pet.\n\nYou have: $currentCoins coins."),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+        ElevatedButton(
+          onPressed: () async {
+            if (currentCoins >= 500) {
+              Navigator.pop(context); // Close dialog
+              setState(() => isLoading = true);
+              final user = Provider.of<User?>(context, listen: false)!;
+              final dbService = DatabaseService(uid: user.uid);
+              await dbService.adoptPet(species, 500);
+              if (mounted) Navigator.pop(context); // Close style screen to show new pet
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Not enough coins!')));
+            }
+          },  
+          child: const Text("Adopt (500)"),
+        )
+      ]
+    ));
+  }
+
+  void _handleHatTap(String hat) {
+    if (hat.isEmpty || unlockedHats.contains(hat)) {
+      setState(() { equippedHat = hat; });
+    } else {
+      _promptHatPurchase(hat);
+    }
+  }
+
+  void _promptHatPurchase(String hat) {
+    showDialog(context: context, builder: (_) => AlertDialog(
+      title: Text("Buy ${hat.toUpperCase()}?"),
+      content: Text("It costs 200 coins to unlock this hat.\n\nYou have: $currentCoins coins."),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+        ElevatedButton(
+          onPressed: () async {
+            if (currentCoins >= 200) {
+              Navigator.pop(context); // Close dialog
+              setState(() => isLoading = true);
+              final user = Provider.of<User?>(context, listen: false)!;
+              final dbService = DatabaseService(uid: user.uid);
+              await dbService.buyHat(hat, 200);
+              
+              if (mounted) {
+                setState(() {
+                  unlockedHats.add(hat);
+                  currentCoins -= 200;
+                  equippedHat = hat;
+                  isLoading = false;
+                });
+              }
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Not enough coins!')));
+            }
+          },  
+          child: const Text("Buy (200)"),
+        )
+      ]
+    ));
   }
 
   @override
@@ -71,7 +192,7 @@ class _StyleScreenState extends State<StyleScreen> {
           )
         ],
       ),
-      body: Column(
+      body: isLoading ? const Center(child: CircularProgressIndicator()) : Column(
         children: [
           // Preview Area
           Expanded(
@@ -155,27 +276,32 @@ class _StyleScreenState extends State<StyleScreen> {
   }
 
   Widget _buildSpeciesTab() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildSelectableCard(
-          title: 'Cat',
-          isSelected: selectedSpecies == 'Cat',
-          onTap: () => setState(() { selectedSpecies = 'Cat'; }),
-          icon: Icons.pets,
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Wrap(
+          spacing: 16,
+          runSpacing: 16,
+          alignment: WrapAlignment.center,
+          children: availableSpecies.map((species) {
+            bool isOwned = _getOwnedPet(species) != null;
+            bool isSelected = selectedSpecies == species;
+            return _buildSelectableCard(
+              title: species,
+              isSelected: isSelected,
+              isLocked: !isOwned,
+              onTap: () => _handleSpeciesTap(species),
+              icon: Icons.pets,
+            );
+          }).toList(),
         ),
-        _buildSelectableCard(
-          title: 'Dog',
-          isSelected: selectedSpecies == 'Dog',
-          onTap: () => setState(() { selectedSpecies = 'Dog'; }),
-          icon: Icons.pets,
-        ),
-      ],
+      ),
     );
   }
 
   Widget _buildStageTab() {
-    int petLevel = widget.currentAvatar.level;
+    int petLevel = _getOwnedPet(selectedSpecies)?.level ?? 1;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -243,15 +369,14 @@ class _StyleScreenState extends State<StyleScreen> {
       itemCount: availableHats.length,
       itemBuilder: (context, index) {
         String hat = availableHats[index];
+        bool isOwned = hat.isEmpty || unlockedHats.contains(hat);
         bool isSelected = equippedHat == hat;
         
         return GestureDetector(
-          onTap: () {
-            setState(() { equippedHat = hat; });
-          },
+          onTap: () => _handleHatTap(hat),
           child: Container(
             decoration: BoxDecoration(
-              color: isSelected ? Colors.orange.shade50 : Colors.white,
+              color: isSelected ? Colors.orange.shade50 : (isOwned ? Colors.white : Colors.grey.shade200),
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
                 color: isSelected ? Colors.orange : Colors.grey.shade300,
@@ -261,7 +386,21 @@ class _StyleScreenState extends State<StyleScreen> {
             child: Center(
               child: hat.isEmpty 
                 ? const Text('None', style: TextStyle(fontWeight: FontWeight.bold))
-                : Text(hat.toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (!isOwned) const Icon(Icons.lock, size: 20, color: Colors.grey),
+                      Text(
+                        hat.toUpperCase(), 
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold, 
+                          fontSize: 12,
+                          color: isOwned ? Colors.black : Colors.grey
+                        )
+                      ),
+                      if (!isOwned) const Text('200 Coins', style: TextStyle(fontSize: 10, color: Colors.orange)),
+                    ],
+                  ),
             ),
           ),
         );
@@ -269,14 +408,14 @@ class _StyleScreenState extends State<StyleScreen> {
     );
   }
 
-  Widget _buildSelectableCard({required String title, required bool isSelected, required VoidCallback onTap, required IconData icon}) {
+  Widget _buildSelectableCard({required String title, required bool isSelected, bool isLocked = false, required VoidCallback onTap, required IconData icon}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 120,
         height: 120,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.orange.shade50 : Colors.white,
+          color: isSelected ? Colors.orange.shade50 : (isLocked ? Colors.grey.shade200 : Colors.white),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? Colors.orange : Colors.grey.shade300,
@@ -286,9 +425,10 @@ class _StyleScreenState extends State<StyleScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: isSelected ? Colors.orange : Colors.grey),
+            Icon(isLocked ? Icons.lock : icon, size: 40, color: isSelected ? Colors.orange : Colors.grey),
             const SizedBox(height: 10),
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.orange : Colors.black)),
+            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.orange : (isLocked ? Colors.grey : Colors.black))),
+            if (isLocked) const Text('500 Coins', style: TextStyle(fontSize: 10, color: Colors.orange)),
           ],
         ),
       ),
