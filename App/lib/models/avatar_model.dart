@@ -10,6 +10,9 @@ class AvatarModel {
            // LevelService logic `exp >= requiredExp` implies `exp` is current progress.
            // However, to keep it simple, let's treat `exp` in model as "Current EXP toward next level".
   
+  int selectedStage;
+  String equippedHat;
+  
   // Stats
   int strength;
   int intelligence; // Was focus
@@ -43,6 +46,8 @@ class AvatarModel {
     this.intelligenceExp = 0,
     this.mindExp = 0,
     this.coins = 0,
+    this.selectedStage = 1,
+    this.equippedHat = '',
   });
 
   // Convert from Firestore Document
@@ -61,6 +66,8 @@ class AvatarModel {
       intelligenceExp: data['intelligence_exp'] ?? 0,
       mindExp: data['mind_exp'] ?? 0,
       coins: data['coins'] ?? 0,
+      selectedStage: data['selectedStage'] ?? 1,
+      equippedHat: data['equippedHat'] ?? '',
     );
   }
 
@@ -79,6 +86,8 @@ class AvatarModel {
       'intelligence_exp': intelligenceExp,
       'mind_exp': mindExp,
       'coins': coins,
+      'selectedStage': selectedStage,
+      'equippedHat': equippedHat,
     };
   }
 }
