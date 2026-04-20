@@ -46,7 +46,25 @@ class DatabaseService {
       'intelligence_exp': 0,
       'mind_exp': 0,
       'coins': 0,
+      'selectedStage': 1,
+      'equippedHat': '',
     });
+  }
+
+  // Update Avatar Style
+  Future<void> updateAvatarStyle({
+    required String avatarId,
+    String? species,
+    int? stage,
+    String? hat,
+  }) async {
+    Map<String, dynamic> data = {};
+    if (species != null) data['species'] = species;
+    if (stage != null) data['selectedStage'] = stage;
+    if (hat != null) data['equippedHat'] = hat;
+    if (data.isNotEmpty) {
+      await avatarCollection.doc(avatarId).update(data);
+    }
   }
 
   // Log Exercise
@@ -106,6 +124,15 @@ class DatabaseService {
     newExp = petLevelUp['rolloverExp']!;
     int petLevelsGained = petLevelUp['levelsGained']!;
 
+    int newSelectedStage = currentAvatar.selectedStage;
+    if (petLevelsGained > 0) {
+      if (newLevel >= 30 && currentAvatar.level < 30) {
+        newSelectedStage = 3;
+      } else if (newLevel >= 10 && currentAvatar.level < 10) {
+        newSelectedStage = 2;
+      }
+    }
+
     // Total Coins
     int totalCoins = currentAvatar.coins + coinGained;
     // Add Level Up Bonuses
@@ -123,6 +150,7 @@ class DatabaseService {
       'strength': newStrength,
       'strength_exp': newStrengthExp,
       'coins': totalCoins,
+      'selectedStage': newSelectedStage,
     });
 
     await batch.commit();
@@ -168,6 +196,15 @@ class DatabaseService {
     newExp = petLevelUp['rolloverExp']!;
     int petLevelsGained = petLevelUp['levelsGained']!;
 
+    int newSelectedStage = currentAvatar.selectedStage;
+    if (petLevelsGained > 0) {
+      if (newLevel >= 30 && currentAvatar.level < 30) {
+        newSelectedStage = 3;
+      } else if (newLevel >= 10 && currentAvatar.level < 10) {
+        newSelectedStage = 2;
+      }
+    }
+
     // Coins
     int totalCoins = currentAvatar.coins + coinGained;
     if (petLevelsGained > 0) totalCoins += (petLevelsGained * 50);
@@ -180,6 +217,7 @@ class DatabaseService {
       'intelligence': newInt,
       'intelligence_exp': newIntExp,
       'coins': totalCoins,
+      'selectedStage': newSelectedStage,
     });
 
     await batch.commit();
@@ -226,6 +264,15 @@ class DatabaseService {
     newExp = petLevelUp['rolloverExp']!;
     int petLevelsGained = petLevelUp['levelsGained']!;
 
+    int newSelectedStage = currentAvatar.selectedStage;
+    if (petLevelsGained > 0) {
+      if (newLevel >= 30 && currentAvatar.level < 30) {
+        newSelectedStage = 3;
+      } else if (newLevel >= 10 && currentAvatar.level < 10) {
+        newSelectedStage = 2;
+      }
+    }
+
     // Coins
     int totalCoins = currentAvatar.coins + coinGained;
     if (petLevelsGained > 0) totalCoins += (petLevelsGained * 50);
@@ -238,6 +285,7 @@ class DatabaseService {
       'mind': newMind,
       'mind_exp': newMindExp,
       'coins': totalCoins,
+      'selectedStage': newSelectedStage,
     });
 
     await batch.commit();

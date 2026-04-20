@@ -9,6 +9,7 @@ import 'settings_screen.dart';
 import 'pomodoro_screen.dart';
 import 'sleep_screen.dart';
 import 'timeline_page.dart'; // Import หน้า Timeline ที่ปรับปรุงเป็นแบบมีปฏิทินแล้ว
+import 'style_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -103,9 +104,7 @@ class HomeScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 10),
-                      _buildPetAvatar(),
-                      const SizedBox(height: 25),
+                      const SizedBox(height: 20),
                       _buildStatBar(
                         "EXP",
                         petExpPct,
@@ -153,17 +152,60 @@ class HomeScreen extends StatelessWidget {
           aspectRatio: 2080 / 1760,
           child: LayoutBuilder(
             builder: (context, constraints) {
+              double scaleX = constraints.maxWidth / 2080;
+              double scaleY = constraints.maxHeight / 1760;
               return Stack(
                 children: [
                   // Combined Room Image
                   Image.asset('assets/room_obj/room.png', fit: BoxFit.contain),
+
+                  // Pet inside room
+                  Positioned(
+                    left: 1040 * scaleX - (175 * scaleX), // Exact middle of the room X (1040 is 2080/2, 175 is half width 350)
+                    top: 1250 * scaleY,  // Middle of the floor Y - moved down further
+                    width: 350 * scaleX,
+                    height: 350 * scaleY,
+                    child: Transform.scale(
+                      scale: 2.25,
+                      alignment: Alignment.bottomCenter,
+                      child: IgnorePointer(
+                          child: Stack(
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              Image.asset(
+                                'assets/pets/${avatar.species.toLowerCase()}/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}.png',
+                                width: 250 * scaleX,
+                                height: 250 * scaleY,
+                                fit: BoxFit.contain,
+                                errorBuilder: (c, e, s) => Image.asset('assets/images/CAT.png', width: 250 * scaleX, height: 250 * scaleY, fit: BoxFit.contain),
+                              ),
+                              if (avatar.equippedHat.isNotEmpty)
+                                Positioned(
+                                  top: 30 * scaleY,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 10 * scaleX, vertical: 5 * scaleY),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.5),
+                                      borderRadius: BorderRadius.circular(8 * scaleX),
+                                    ),
+                                    child: Text(
+                                      avatar.equippedHat.toUpperCase(),
+                                      style: TextStyle(color: Colors.white, fontSize: 30 * scaleX, fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   
                   // Hitboxes (Interactive)
                   // Wardrobe -> Style (Coming Soon)
                   _buildHitbox(
                     constraints: constraints,
                     rect: const Rect.fromLTRB(1600, 640, 2080, 1360),
-                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Style Page Coming Soon! 🚧"))),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StyleScreen(currentAvatar: avatar))),
                   ),
                   // Bed -> Sleep Page
                   _buildHitbox(
@@ -261,33 +303,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildPetAvatar() {
-    return Container(
-      width: 120, // Reduced from 160 to fit nicely in flex: 4
-      height: 120,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey.shade300, width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Image.asset(
-          'assets/images/CAT.png',
-          width: 90,
-          height: 90,
-          fit: BoxFit.contain,
-        ),
       ),
     );
   }

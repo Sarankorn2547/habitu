@@ -83,6 +83,9 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/room_obj/
+    - assets/pets/cat/
+    - assets/pets/dog/
+    - assets/hats/
   
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
