@@ -56,13 +56,18 @@ class _StyleScreenState extends State<StyleScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Style Your Pet', style: TextStyle(fontWeight: FontWeight.bold)),
+        leading: IconButton(
+          icon: const Icon(Icons.chevron_left, color: Colors.purple, size: 40),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('STYLE YOUR PET', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2)),
+        centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           TextButton(
             onPressed: _saveChanges,
-            child: const Text('Save', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            child: const Text('Save', style: TextStyle(color: Colors.orange, fontSize: 16, fontWeight: FontWeight.bold)),
           )
         ],
       ),
@@ -124,7 +129,7 @@ class _StyleScreenState extends State<StyleScreen> {
                 children: [
                   const TabBar(
                     labelColor: Colors.black,
-                    indicatorColor: Colors.blueAccent,
+                    indicatorColor: Colors.orange,
                     tabs: [
                       Tab(text: 'Species'),
                       Tab(text: 'Stage'),
@@ -200,10 +205,10 @@ class _StyleScreenState extends State<StyleScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.shade50 : Colors.white,
+          color: isSelected ? Colors.orange.shade50 : Colors.white,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: isSelected ? Colors.blueAccent : Colors.grey.shade300,
+            color: isSelected ? Colors.orange : Colors.grey.shade300,
             width: 2,
           ),
         ),
@@ -220,7 +225,7 @@ class _StyleScreenState extends State<StyleScreen> {
                 ],
               )
             else if (isSelected)
-              const Icon(Icons.check_circle, color: Colors.blueAccent)
+              const Icon(Icons.check_circle, color: Colors.orange)
           ],
         ),
       ),
@@ -246,10 +251,10 @@ class _StyleScreenState extends State<StyleScreen> {
           },
           child: Container(
             decoration: BoxDecoration(
-              color: isSelected ? Colors.blue.shade50 : Colors.white,
+              color: isSelected ? Colors.orange.shade50 : Colors.white,
               borderRadius: BorderRadius.circular(15),
               border: Border.all(
-                color: isSelected ? Colors.blueAccent : Colors.grey.shade300,
+                color: isSelected ? Colors.orange : Colors.grey.shade300,
                 width: 2,
               ),
             ),
@@ -271,19 +276,19 @@ class _StyleScreenState extends State<StyleScreen> {
         width: 120,
         height: 120,
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.shade50 : Colors.white,
+          color: isSelected ? Colors.orange.shade50 : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? Colors.blueAccent : Colors.grey.shade300,
+            color: isSelected ? Colors.orange : Colors.grey.shade300,
             width: 2,
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: isSelected ? Colors.blueAccent : Colors.grey),
+            Icon(icon, size: 40, color: isSelected ? Colors.orange : Colors.grey),
             const SizedBox(height: 10),
-            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.blueAccent : Colors.black)),
+            Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: isSelected ? Colors.orange : Colors.black)),
           ],
         ),
       ),
