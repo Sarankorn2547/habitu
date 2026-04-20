@@ -11,20 +11,53 @@ class DatabaseService {
       .collection('avatars');
   final CollectionReference exerciseCollection = FirebaseFirestore.instance
       .collection('exercise_logs');
+  final CollectionReference userCollection = FirebaseFirestore.instance
+      .collection('users');
 
   // Stream Avatar
   Stream<AvatarModel?> get myAvatar {
     return avatarCollection
         .where('user_id', isEqualTo: uid)
-        .limit(1)
         .snapshots()
         .map((snapshot) {
           if (snapshot.docs.isEmpty) return null;
-          return AvatarModel.fromMap(
-            snapshot.docs.first.data() as Map<String, dynamic>,
-            snapshot.docs.first.id,
-          );
+          try {
+            final activeDoc = snapshot.docs.firstWhere((doc) => (doc.data() as Map<String, dynamic>)['isActive'] == true);
+            return AvatarModel.fromMap(activeDoc.data() as Map<String, dynamic>, activeDoc.id);
+          } catch (e) {
+            // Fallback
+            return AvatarModel.fromMap(snapshot.docs.first.data() as Map<String, dynamic>, snapshot.docs.first.id);
+          }
         });
+  }
+
+  // Stream All Avatars
+  Stream<List<AvatarModel>> get allMyAvatars {
+    return avatarCollection
+        .where('user_id', isEqualTo: uid)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) => AvatarModel.fromMap(doc.data() as Map<String, dynamic>, doc.id)).toList();
+        });
+  }
+
+  // Stream Coins
+  Stream<int> get myCoins {
+    return userCollection.doc(uid).snapshots().asyncMap((snapshot) async {
+      if (!snapshot.exists) {
+        // Migrate silently
+        var avatars = await avatarCollection.where('user_id', isEqualTo: uid).limit(1).get();
+        int initialCoins = 0;
+        if (avatars.docs.isNotEmpty) {
+          var data = avatars.docs.first.data() as Map<String, dynamic>;
+          initialCoins = data['coins'] ?? 0;
+          await avatars.docs.first.reference.update({'isActive': true});
+        }
+        await userCollection.doc(uid).set({'coins': initialCoins});
+        return initialCoins;
+      }
+      return (snapshot.data() as Map<String, dynamic>)['coins'] ?? 0;
+    });
   }
   // Update Avatar Name
   Future<void> updateAvatarName(String avatarId, String newName) async {
@@ -45,10 +78,81 @@ class DatabaseService {
       'strength_exp': 0,
       'intelligence_exp': 0,
       'mind_exp': 0,
-      'coins': 0,
+      'isActive': true,
       'selectedStage': 1,
       'equippedHat': '',
     });
+
+    final userDoc = await userCollection.doc(uid).get();
+    if (!userDoc.exists) {
+      await userCollection.doc(uid).set({'coins': 0});
+    }
+  }
+
+
+
+  Future<void> switchActivePet(String avatarId) async {
+    WriteBatch batch = FirebaseFirestore.instance.batch();
+    var allAvatars = await avatarCollection.where('user_id', isEqualTo: uid).get();
+    for (var doc in allAvatars.docs) {
+      batch.update(doc.reference, {'isActive': false});
+    }
+    batch.update(avatarCollection.doc(avatarId), {'isActive': true});
+    await batch.commit();
+  }
+
+  Future<void> adoptPet(String species, int cost) async {
+    var userDoc = await userCollection.doc(uid).get();
+    int currentCoins = 0;
+    if (userDoc.exists) {
+      currentCoins = (userDoc.data() as Map<String, dynamic>)['coins'] ?? 0;
+    }
+    if (currentCoins < cost) return;
+
+    WriteBatch batch = FirebaseFirestore.instance.batch();
+    batch.update(userCollection.doc(uid), {'coins': currentCoins - cost});
+
+    var allAvatars = await avatarCollection.where('user_id', isEqualTo: uid).get();
+    for (var doc in allAvatars.docs) {
+      batch.update(doc.reference, {'isActive': false});
+    }
+
+    DocumentReference newAvatarRef = avatarCollection.doc();
+    batch.set(newAvatarRef, {
+      'user_id': uid,
+      'name': 'My $species',
+      'species': species,
+      'level': 1,
+      'exp': 0,
+      'strength': 1,
+      'intelligence': 1,
+      'mind': 1,
+      'strength_exp': 0,
+      'intelligence_exp': 0,
+      'mind_exp': 0,
+      'isActive': true,
+      'selectedStage': 1,
+      'equippedHat': '',
+    });
+
+    await batch.commit();
+  }
+
+  Future<void> buyHat(String hat, int cost) async {
+    var userDoc = await userCollection.doc(uid).get();
+    int currentCoins = 0;
+    if (userDoc.exists) {
+      currentCoins = (userDoc.data() as Map<String, dynamic>)['coins'] ?? 0;
+    }
+    if (currentCoins < cost) return;
+
+    WriteBatch batch = FirebaseFirestore.instance.batch();
+    batch.set(userCollection.doc(uid), {
+      'coins': FieldValue.increment(-cost),
+      'unlocked_hats': FieldValue.arrayUnion([hat])
+    }, SetOptions(merge: true));
+
+    await batch.commit();
   }
 
   // Update Avatar Style
@@ -134,13 +238,13 @@ class DatabaseService {
     }
 
     // Total Coins
-    int totalCoins = currentAvatar.coins + coinGained;
+    int totalCoinGained = coinGained;
     // Add Level Up Bonuses
     if (petLevelsGained > 0) {
-      totalCoins += (petLevelsGained * 50); // 50 coins per pet level
+      totalCoinGained += (petLevelsGained * 50); // 50 coins per pet level
     }
     if (strengthLevelsGained > 0) {
-      totalCoins += (strengthLevelsGained * 20); // 20 coins per stat level
+      totalCoinGained += (strengthLevelsGained * 20); // 20 coins per stat level
     }
 
     DocumentReference avatarRef = avatarCollection.doc(avatarId);
@@ -149,9 +253,12 @@ class DatabaseService {
       'level': newLevel,
       'strength': newStrength,
       'strength_exp': newStrengthExp,
-      'coins': totalCoins,
       'selectedStage': newSelectedStage,
     });
+    
+    batch.set(userCollection.doc(uid), {
+      'coins': FieldValue.increment(totalCoinGained)
+    }, SetOptions(merge: true));
 
     await batch.commit();
   }
@@ -206,9 +313,9 @@ class DatabaseService {
     }
 
     // Coins
-    int totalCoins = currentAvatar.coins + coinGained;
-    if (petLevelsGained > 0) totalCoins += (petLevelsGained * 50);
-    if (intLevelsGained > 0) totalCoins += (intLevelsGained * 20);
+    int totalCoinGained = coinGained;
+    if (petLevelsGained > 0) totalCoinGained += (petLevelsGained * 50);
+    if (intLevelsGained > 0) totalCoinGained += (intLevelsGained * 20);
 
     DocumentReference avatarRef = avatarCollection.doc(avatarId);
     batch.update(avatarRef, {
@@ -216,9 +323,12 @@ class DatabaseService {
       'level': newLevel,
       'intelligence': newInt,
       'intelligence_exp': newIntExp,
-      'coins': totalCoins,
       'selectedStage': newSelectedStage,
     });
+
+    batch.set(userCollection.doc(uid), {
+      'coins': FieldValue.increment(totalCoinGained)
+    }, SetOptions(merge: true));
 
     await batch.commit();
   }
@@ -274,9 +384,9 @@ class DatabaseService {
     }
 
     // Coins
-    int totalCoins = currentAvatar.coins + coinGained;
-    if (petLevelsGained > 0) totalCoins += (petLevelsGained * 50);
-    if (mindLevelsGained > 0) totalCoins += (mindLevelsGained * 20);
+    int totalCoinGained = coinGained;
+    if (petLevelsGained > 0) totalCoinGained += (petLevelsGained * 50);
+    if (mindLevelsGained > 0) totalCoinGained += (mindLevelsGained * 20);
 
     DocumentReference avatarRef = avatarCollection.doc(avatarId);
     batch.update(avatarRef, {
@@ -284,9 +394,12 @@ class DatabaseService {
       'level': newLevel,
       'mind': newMind,
       'mind_exp': newMindExp,
-      'coins': totalCoins,
       'selectedStage': newSelectedStage,
     });
+
+    batch.set(userCollection.doc(uid), {
+      'coins': FieldValue.increment(totalCoinGained)
+    }, SetOptions(merge: true));
 
     await batch.commit();
   }

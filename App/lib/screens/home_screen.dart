@@ -79,7 +79,12 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
             actions: [
-              _buildCoinDisplay(avatar.coins),
+              StreamBuilder<int>(
+                stream: dbService.myCoins,
+                builder: (context, coinSnap) {
+                  return _buildCoinDisplay(coinSnap.data ?? 0);
+                }
+              ),
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.grey),
                 onPressed: () => Navigator.push(
@@ -89,55 +94,48 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-          body: Column(
-            children: [
-              // --- ส่วนห้อง Isometric (Room Area) ---
-              Expanded(
-                flex: 5,
-                child: _buildIsometricRoom(context, avatar),
-              ),
+          body: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // --- ส่วนห้อง Isometric (Room Area) ---
+                  _buildIsometricRoom(context, avatar),
 
-              // --- ส่วนแสดงสัตว์เลี้ยง (Pet Stats Area) ---
-              Expanded(
-                flex: 4,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildStatBar(
-                        "EXP",
-                        petExpPct,
-                        Colors.greenAccent.shade400,
-                        "Lv.${avatar.level}",
-                      ),
-                      const SizedBox(height: 8),
-                      _buildStatBar(
-                        "INT",
-                        intExpPct,
-                        Colors.blueAccent.shade200,
-                        "Lv.${avatar.intelligence}",
-                      ),
-                      const SizedBox(height: 8),
-                      _buildStatBar(
-                        "MND",
-                        mindExpPct,
-                        Colors.indigoAccent.shade200,
-                        "Lv.${avatar.mind}",
-                      ),
-                      const SizedBox(height: 8),
-                      _buildStatBar(
-                        "STR",
-                        strExpPct,
-                        Colors.redAccent.shade200,
-                        "Lv.${avatar.strength}",
-                      ),
-                      const SizedBox(height: 20),
-                    ],
+                  const SizedBox(height: 20),
+
+                  // --- ส่วนแสดงสัตว์เลี้ยง (Pet Stats Area) ---
+                  _buildStatBar(
+                    "EXP",
+                    petExpPct,
+                    Colors.greenAccent.shade400,
+                    "Lv.${avatar.level}",
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  _buildStatBar(
+                    "INT",
+                    intExpPct,
+                    Colors.blueAccent.shade200,
+                    "Lv.${avatar.intelligence}",
+                  ),
+                  const SizedBox(height: 8),
+                  _buildStatBar(
+                    "MND",
+                    mindExpPct,
+                    Colors.indigoAccent.shade200,
+                    "Lv.${avatar.mind}",
+                  ),
+                  const SizedBox(height: 8),
+                  _buildStatBar(
+                    "STR",
+                    strExpPct,
+                    Colors.redAccent.shade200,
+                    "Lv.${avatar.strength}",
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },
