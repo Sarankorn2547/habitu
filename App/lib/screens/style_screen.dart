@@ -7,7 +7,7 @@ import '../models/avatar_model.dart';
 class StyleScreen extends StatefulWidget {
   final AvatarModel currentAvatar;
 
-  const StyleScreen({Key? key, required this.currentAvatar}) : super(key: key);
+  const StyleScreen({super.key, required this.currentAvatar});
 
   @override
   _StyleScreenState createState() => _StyleScreenState();

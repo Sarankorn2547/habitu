@@ -10,8 +10,11 @@ import 'pomodoro_screen.dart';
 import 'sleep_screen.dart';
 import 'timeline_page.dart'; // Import หน้า Timeline ที่ปรับปรุงเป็นแบบมีปฏิทินแล้ว
 import 'style_screen.dart';
+import '../main.dart';
 
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<User?>(context);
@@ -20,8 +23,9 @@ class HomeScreen extends StatelessWidget {
     return StreamBuilder<AvatarModel?>(
       stream: dbService.myAvatar,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
 
         if (!snapshot.hasData) {
           dbService.createInitialAvatar("My Pet");
@@ -63,8 +67,15 @@ class HomeScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     GestureDetector(
-                      onTap: () => _showRenameDialog(context, dbService, avatar),
-                      child: const Icon(Icons.edit, size: 18, color: Colors.grey),
+                      onTap: () {
+                        playClickSound();
+                        _showRenameDialog(context, dbService, avatar);
+                      },
+                      child: const Icon(
+                        Icons.edit,
+                        size: 18,
+                        color: Colors.grey,
+                      ),
                     ),
                   ],
                 ),
@@ -83,14 +94,17 @@ class HomeScreen extends StatelessWidget {
                 stream: dbService.myCoins,
                 builder: (context, coinSnap) {
                   return _buildCoinDisplay(coinSnap.data ?? 0);
-                }
+                },
               ),
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.grey),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => SettingsScreen()),
-                ),
+                onPressed: () {
+                  playClickSound();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => SettingsScreen()),
+                  );
+                },
               ),
             ],
           ),
@@ -159,81 +173,147 @@ class HomeScreen extends StatelessWidget {
 
                   // Pet inside room
                   Positioned(
-                    left: 1040 * scaleX - (175 * scaleX), // Exact middle of the room X (1040 is 2080/2, 175 is half width 350)
-                    top: 1250 * scaleY,  // Middle of the floor Y - moved down further
+                    left:
+                        1040 * scaleX -
+                        (175 *
+                            scaleX), // Exact middle of the room X (1040 is 2080/2, 175 is half width 350)
+                    top:
+                        1250 *
+                        scaleY, // Middle of the floor Y - moved down further
                     width: 350 * scaleX,
                     height: 350 * scaleY,
                     child: Transform.scale(
                       scale: 2.25,
                       alignment: Alignment.bottomCenter,
                       child: IgnorePointer(
-                          child: Stack(
-                            alignment: Alignment.bottomCenter,
-                            children: [
-                              Image.asset(
-                                'assets/pets/${avatar.species.toLowerCase()}/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}.png',
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            Image.asset(
+                              'assets/pets/${avatar.species.toLowerCase()}/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}.png',
+                              width: 250 * scaleX,
+                              height: 250 * scaleY,
+                              fit: BoxFit.contain,
+                              errorBuilder: (c, e, s) => Image.asset(
+                                'assets/images/CAT.png',
                                 width: 250 * scaleX,
                                 height: 250 * scaleY,
                                 fit: BoxFit.contain,
-                                errorBuilder: (c, e, s) => Image.asset('assets/images/CAT.png', width: 250 * scaleX, height: 250 * scaleY, fit: BoxFit.contain),
                               ),
-                              if (avatar.equippedHat.isNotEmpty)
-                                Positioned(
-                                  top: 30 * scaleY,
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 10 * scaleX, vertical: 5 * scaleY),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.5),
-                                      borderRadius: BorderRadius.circular(8 * scaleX),
+                            ),
+                            if (avatar.equippedHat.isNotEmpty)
+                              Positioned(
+                                top: 30 * scaleY,
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 10 * scaleX,
+                                    vertical: 5 * scaleY,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    borderRadius: BorderRadius.circular(
+                                      8 * scaleX,
                                     ),
-                                    child: Text(
-                                      avatar.equippedHat.toUpperCase(),
-                                      style: TextStyle(color: Colors.white, fontSize: 30 * scaleX, fontWeight: FontWeight.bold),
+                                  ),
+                                  child: Text(
+                                    avatar.equippedHat.toUpperCase(),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 30 * scaleX,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
-                  
+                  ),
+
                   // Hitboxes (Interactive)
                   // Wardrobe -> Style (Coming Soon)
                   _buildHitbox(
                     constraints: constraints,
                     rect: const Rect.fromLTRB(1600, 640, 2080, 1360),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StyleScreen(currentAvatar: avatar))),
+                    onTap: () {
+                      playClickSound();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => StyleScreen(currentAvatar: avatar),
+                        ),
+                      );
+                    },
                   ),
                   // Bed -> Sleep Page
                   _buildHitbox(
                     constraints: constraints,
                     rect: const Rect.fromLTRB(800, 640, 1600, 1200),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SleepPage(avatar: avatar))),
+                    onTap: () {
+                      playClickSound();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SleepPage(avatar: avatar),
+                        ),
+                      );
+                    },
                   ),
                   // Calendar -> Timeline Page
                   _buildHitbox(
                     constraints: constraints,
                     rect: const Rect.fromLTRB(1190, 230, 1370, 480),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TimelineCalendarPage())),
+                    onTap: () {
+                      playClickSound();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const TimelineCalendarPage(),
+                        ),
+                      );
+                    },
                   ),
                   // Desk -> Pomodoro / Focus Page
                   _buildHitbox(
                     constraints: constraints,
                     rect: const Rect.fromLTRB(320, 780, 800, 1270),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => PomodoroPage(avatar: avatar))),
+                    onTap: () {
+                      playClickSound();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PomodoroPage(avatar: avatar),
+                        ),
+                      );
+                    },
                   ),
                   // Trophy -> Achievement (Coming Soon)
                   _buildHitbox(
                     constraints: constraints,
                     rect: const Rect.fromLTRB(0, 980, 320, 1440),
-                    onTap: () => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Achievement Page Coming Soon! 🚧"))),
+                    onTap: () {
+                      playClickSound();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Achievement Page Coming Soon! 🚧"),
+                        ),
+                      );
+                    },
                   ),
                   // Dumbell -> Workout Page
                   _buildHitbox(
                     constraints: constraints,
                     rect: const Rect.fromLTRB(80, 1570, 230, 1710),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => WorkoutScreen(avatar: avatar))),
+                    onTap: () {
+                      playClickSound();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => WorkoutScreen(avatar: avatar),
+                        ),
+                      );
+                    },
                   ),
                 ],
               );
@@ -267,7 +347,7 @@ class HomeScreen extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         child: Container(
           // Set to Colors.transparent for production, or Colors.red.withOpacity(0.5) to debug hitboxes!
-          color: Colors.transparent, 
+          color: Colors.transparent,
         ),
       ),
     );
@@ -349,7 +429,11 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  void _showRenameDialog(BuildContext context, DatabaseService dbService, AvatarModel avatar) {
+  void _showRenameDialog(
+    BuildContext context,
+    DatabaseService dbService,
+    AvatarModel avatar,
+  ) {
     TextEditingController controller = TextEditingController(text: avatar.name);
     showDialog(
       context: context,
@@ -363,13 +447,19 @@ class HomeScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                playClickSound();
+                Navigator.pop(context);
+              },
               child: const Text("Cancel"),
             ),
             ElevatedButton(
               onPressed: () async {
                 if (controller.text.trim().isNotEmpty) {
-                  await dbService.updateAvatarName(avatar.id, controller.text.trim());
+                  await dbService.updateAvatarName(
+                    avatar.id,
+                    controller.text.trim(),
+                  );
                 }
                 Navigator.pop(context);
               },

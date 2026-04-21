@@ -8,6 +8,9 @@ import 'firebase_options.dart'; // สำคัญ: ต้อง import เพ�
 import 'services/auth_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'package:audioplayers/audioplayers.dart';
+
+final AudioPlayer themePlayer = AudioPlayer();
 
 void main() async {
   // 1. รอให้ Native Code โหลดเสร็จก่อน
@@ -16,11 +19,15 @@ void main() async {
   // 2. เริ่มต้น Firebase ด้วย Options ที่ได้จาก FlutterFire CLI
   // (แก้ปัญหาเรื่องหา google-services.json ไม่เจอ หรือ setup ผิด platform)
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
   runApp(MyApp());
+  await themePlayer.setReleaseMode(ReleaseMode.loop); // ให้เล่นวนซ้ำ
+  await themePlayer.play(AssetSource('audio/themeSong.mp3'));
+  await themePlayer.setVolume(0.3);
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -60,6 +67,8 @@ class MyApp extends StatelessWidget {
 
 // Widget ตัวตัดสินใจว่าจะพาไปหน้าไหน (Gatekeeper)
 class AuthenticationWrapper extends StatelessWidget {
+  const AuthenticationWrapper({super.key});
+
   @override
   Widget build(BuildContext context) {
     // ดึงค่า User ปัจจุบันมาจาก Provider
@@ -74,4 +83,11 @@ class AuthenticationWrapper extends StatelessWidget {
     // ถ้าไม่มี User (ยังไม่ Login) -> ไปหน้า Login
     return LoginScreen();
   }
+}
+
+final AudioPlayer effectPlayer = AudioPlayer();
+
+void playClickSound() {
+  // ไม่ต้องใช้ await เพราะเราต้องการให้เสียงดังทันทีที่กด ไม่ต้องรอโหลดเสร็จ
+  effectPlayer.play(AssetSource('audio/click.mp3'), volume: 0.5);
 }

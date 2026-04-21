@@ -7,7 +7,7 @@ import 'dart:async';
 
 class WorkoutScreen extends StatefulWidget {
   final AvatarModel avatar;
-  WorkoutScreen({required this.avatar});
+  const WorkoutScreen({super.key, required this.avatar});
 
   @override
   _WorkoutScreenState createState() => _WorkoutScreenState();
@@ -308,7 +308,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             Text("Manual Input", style: TextStyle(color: Colors.grey)),
             Switch(
               value: _isTimerMode,
-              activeColor: Colors.orange,
+              activeThumbColor: Colors.orange,
               onChanged: (val) {
                 setState(() {
                    _isTimerMode = val;
