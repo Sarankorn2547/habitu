@@ -48,7 +48,7 @@ class AuthService {
       await _auth.currentUser?.updateDisplayName(newName);
     } catch (e) {
       print(e.toString());
-      throw e;
+      rethrow;
     }
   }
 
@@ -58,7 +58,7 @@ class AuthService {
       await _auth.currentUser?.updatePassword(newPassword);
     } catch (e) {
       print(e.toString());
-      throw e;
+      rethrow;
     }
   }
 
@@ -68,7 +68,7 @@ class AuthService {
       await _auth.currentUser?.delete();
     } catch (e) {
       print(e.toString());
-      throw e;
+      rethrow;
     }
   }
 }

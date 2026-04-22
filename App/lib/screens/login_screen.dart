@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -10,7 +12,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   // 0 = Login, 1 = Register
   int _selectedIndex = 0;
-  
+
   final _emailController = TextEditingController();
   final _passController = TextEditingController();
   final _confirmPassController = TextEditingController();
@@ -52,7 +54,9 @@ class _LoginScreenState extends State<LoginScreen> {
         // --- LOGIN ---
         final user = await authService.signIn(email, password);
         if (user == null) {
-          throw Exception("Login failed. Please check your email and password.");
+          throw Exception(
+            "Login failed. Please check your email and password.",
+          );
         }
       } else {
         // --- REGISTER ---
@@ -82,9 +86,12 @@ class _LoginScreenState extends State<LoginScreen> {
       _showError("Please enter your email to reset password");
       return;
     }
-    
+
     try {
-      await Provider.of<AuthService>(context, listen: false).sendPasswordResetEmail(email);
+      await Provider.of<AuthService>(
+        context,
+        listen: false,
+      ).sendPasswordResetEmail(email);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Password reset link sent to $email"),
@@ -126,7 +133,11 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // --- Header ---
-              Icon(Icons.emoji_events_rounded, size: 80, color: colorScheme.primary),
+              Icon(
+                Icons.emoji_events_rounded,
+                size: 80,
+                color: colorScheme.primary,
+              ),
               SizedBox(height: 16),
               Text(
                 "HABIT U",
@@ -181,8 +192,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   labelText: "Password",
                   prefixIcon: Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
