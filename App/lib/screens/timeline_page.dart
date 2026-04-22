@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'timeline_detail_page.dart'; // ไฟล์แสดงรายละเอียดที่เราจะสร้างในข้อ 2
+import 'timeline_detail_page.dart';
+import '../main.dart'; // ไฟล์แสดงรายละเอียดที่เราจะสร้างในข้อ 2
 
 class TimelineCalendarPage extends StatefulWidget {
   const TimelineCalendarPage({super.key});
@@ -20,7 +21,10 @@ class _TimelineCalendarPageState extends State<TimelineCalendarPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, color: Colors.purple, size: 40),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            playClickSound();
+            Navigator.pop(context);
+          },
         ),
         title: const Text(
           'MY TIMELINE',

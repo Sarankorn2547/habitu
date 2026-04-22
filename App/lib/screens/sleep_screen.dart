@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/database_service.dart';
 import '../models/avatar_model.dart';
+import '../main.dart';
 
 class SleepPage extends StatefulWidget {
   final AvatarModel avatar;
@@ -76,6 +77,7 @@ class _SleepPageState extends State<SleepPage> {
         actions: [
           TextButton(
             onPressed: () {
+              playClickSound();
               Navigator.pop(context);
               setState(() {
                 secondsPassed = 0; // Reset for next sleep
@@ -109,7 +111,10 @@ class _SleepPageState extends State<SleepPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, color: Colors.purple, size: 40),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            playClickSound();
+            Navigator.pop(context);
+          },
         ),
         title: const Text(
           'Sleep Time',
@@ -168,7 +173,10 @@ class _SleepPageState extends State<SleepPage> {
 
             // --- ปุ่ม Awake / Up ---
             GestureDetector(
-              onTap: toggleSleep,
+              onTap: () {
+              playClickSound();
+              toggleSleep();
+            },
               child: Column(
                 children: [
                   Icon(

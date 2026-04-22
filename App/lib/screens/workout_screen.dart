@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/database_service.dart';
 import '../models/avatar_model.dart';
+import '../main.dart';
 import 'dart:async';
 
 class WorkoutScreen extends StatefulWidget {
@@ -115,7 +116,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: Icon(Icons.chevron_left, color: Colors.purple, size: 40),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            playClickSound();
+            Navigator.pop(context);
+          },
         ),
         title: Text(
           "LOG WORKOUT",
@@ -146,17 +150,18 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
             // Exercise Icon
             Container(
-              height: 120, // Slightly smaller
-              width: 120,
+              height: 150, // Slightly smaller
+              width: 150,
               decoration: BoxDecoration(
                 color: Colors.orange.shade50,
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.orange, width: 3),
               ),
               child: Center(
-                child: Text(
-                  _exerciseEmojis[_selectedType] ?? '🤸',
-                  style: TextStyle(fontSize: 60),
+                child: Image.asset(
+                'assets/icons/runningman.png',
+                width: 400,
+                height: 400,
                 ),
               ),
             ),
@@ -222,6 +227,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   elevation: 5,
                 ),
                 onPressed: () async {
+                  playClickSound();
                    if (_isTimerRunning) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text("Please stop the timer first!"))
@@ -272,7 +278,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     bool isSelected = _selectedCategory == category;
     return Expanded(
       child: GestureDetector(
-        onTap: () => _updateCategory(category),
+        onTap: () {
+          playClickSound();
+          _updateCategory(category);
+        },
         child: Container(
           padding: EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
@@ -333,21 +342,30 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               FloatingActionButton(
                 heroTag: "start",
                 backgroundColor: Colors.green,
-                onPressed: _startTimer,
+                onPressed: () {
+                  playClickSound();
+                  _startTimer();
+                },
                 child: Icon(Icons.play_arrow),
               ),
               if (_isTimerRunning)
               FloatingActionButton(
                 heroTag: "stop",
                 backgroundColor: Colors.red,
-                onPressed: _stopTimer,
+                onPressed: () {
+                  playClickSound();
+                  _stopTimer();
+                },
                 child: Icon(Icons.stop),
               ),
               SizedBox(width: 20),
               FloatingActionButton(
                 heroTag: "reset",
                 backgroundColor: Colors.grey,
-                onPressed: _resetTimer,
+                onPressed: () {
+                  playClickSound();
+                  _resetTimer();
+                },
                 child: Icon(Icons.refresh),
               ),
             ],
@@ -457,7 +475,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              playClickSound();
+              Navigator.pop(context);
+            },
             child: Text("AWESOME",
                 style:
                     TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),

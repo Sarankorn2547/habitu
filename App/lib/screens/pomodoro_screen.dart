@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/database_service.dart';
 import '../models/avatar_model.dart';
+import '../main.dart';
 
 class PomodoroPage extends StatefulWidget {
   final AvatarModel avatar;
@@ -95,7 +96,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              playClickSound();
+              Navigator.pop(context);
+            },
             child: const Text("GREAT!"),
           ),
         ],
@@ -116,7 +120,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, color: Colors.purple, size: 40),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            playClickSound();
+            Navigator.pop(context);
+          },
         ),
         title: const Text(
           'FOCUSTIME',
@@ -174,9 +181,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      onPressed: () => setState(
-                        () => settingTime > 1 ? settingTime-- : null,
-                      ),
+                      onPressed: () {
+                        playClickSound();
+                        setState(() => settingTime > 1 ? settingTime-- : null);
+                      },
                       icon: const Icon(Icons.remove),
                     ),
                     Text(
@@ -187,7 +195,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => setState(() => settingTime++),
+                      onPressed: () {
+                        playClickSound();
+                        setState(() => settingTime++);
+                      },
                       icon: const Icon(Icons.add),
                     ),
                   ],
@@ -196,6 +207,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
+                  playClickSound();
                   setState(() {
                     timeLeft = settingTime * 60; // แปลงนาทีเป็นวินาที
                   });
@@ -235,6 +247,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
                   // ปุ่มยกเลิก
                   IconButton(
                     onPressed: () {
+                      playClickSound();
                       _timer?.cancel();
                       setState(() {
                         isStarted = false;
@@ -249,7 +262,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
                   const SizedBox(width: 40),
                   // ปุ่มพัก/ไปต่อ
                   IconButton(
-                    onPressed: isPaused ? startTimer : pauseTimer,
+                    onPressed: () {
+                      playClickSound();
+                      isPaused ? startTimer() : pauseTimer();
+                    },
                     icon: Icon(
                       isPaused
                           ? Icons.play_circle_fill

@@ -36,11 +36,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              playClickSound();
+              Navigator.pop(context);
+            },
             child: Text("Cancel"),
           ),
           TextButton(
             onPressed: () async {
+              playClickSound();
               if (controller.text.isNotEmpty) {
                 await _auth.updateUsername(controller.text);
                 if (mounted) {
@@ -71,11 +75,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              playClickSound();
+              Navigator.pop(context);
+            },
             child: Text("Cancel"),
           ),
           TextButton(
             onPressed: () async {
+              playClickSound();
               if (controller.text.isNotEmpty) {
                 try {
                   await _auth.updatePassword(controller.text);
@@ -115,11 +123,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              playClickSound();
+              Navigator.pop(context);
+            },
             child: Text("Cancel"),
           ),
           TextButton(
             onPressed: () async {
+              playClickSound();
               final uid = FirebaseAuth.instance.currentUser?.uid;
               if (uid != null) {
                 DatabaseService db = DatabaseService(uid: uid);
@@ -149,11 +161,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              playClickSound();
+              Navigator.pop(context);
+            },
             child: Text("Cancel"),
           ),
           TextButton(
             onPressed: () async {
+              playClickSound();
               final uid = FirebaseAuth.instance.currentUser?.uid;
               if (uid != null) {
                 try {
@@ -194,12 +210,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: Icon(Icons.person),
             title: Text("Change Username"),
-            onTap: _showChangeUsernameDialog,
+            onTap: () {
+              playClickSound();
+              _showChangeUsernameDialog();
+            },
           ),
           ListTile(
             leading: Icon(Icons.lock),
             title: Text("Change Password"),
-            onTap: _showChangePasswordDialog,
+            onTap: () {
+              playClickSound();
+              _showChangePasswordDialog();
+            },
           ),
           ListTile(
             title: Text("Background Music Volume"),
@@ -237,18 +259,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
               "Delete All Data",
               style: TextStyle(color: Colors.orange),
             ),
-            onTap: _showDeleteDataDialog,
+            onTap: () {
+              playClickSound();
+              _showDeleteDataDialog();
+            },
           ),
           ListTile(
             leading: Icon(Icons.delete_forever, color: Colors.red),
             title: Text("Delete Account", style: TextStyle(color: Colors.red)),
-            onTap: _showDeleteAccountDialog,
+            onTap: () {
+              playClickSound();
+              _showDeleteAccountDialog();
+            },
           ),
           Divider(),
           ListTile(
             leading: Icon(Icons.logout, color: Colors.red),
             title: Text("Logout", style: TextStyle(color: Colors.red)),
             onTap: () async {
+              playClickSound();
               await _auth.signOut();
               if (mounted) {
                 Navigator.pop(context); // Close setting screen
