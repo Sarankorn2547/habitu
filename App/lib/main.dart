@@ -20,47 +20,109 @@ void main() async {
   // (แก้ปัญหาเรื่องหา google-services.json ไม่เจอ หรือ setup ผิด platform)
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(MyApp());
-  await themePlayer.setReleaseMode(ReleaseMode.loop); // ให้เล่นวนซ้ำ
-  await themePlayer.play(
-    AssetSource('audio/themeSong.mp3'),
-  ); // เล่นเพลงธีมตอนเปิดแอป);
+  await themePlayer.setReleaseMode(ReleaseMode.loop);
+  await themePlayer.setVolume(0.3);
+  await AudioPlayer.global.setAudioContext(AudioContext(
+    android: AudioContextAndroid(
+      isSpeakerphoneOn: false,
+      stayAwake: false,
+      contentType: AndroidContentType.music,
+      usageType: AndroidUsageType.media,
+      audioFocus: AndroidAudioFocus.none,
+    ),
+    iOS: AudioContextIOS(
+      category: AVAudioSessionCategory.ambient,
+      options: {AVAudioSessionOptions.mixWithOthers},
+    ),
+  ));
+  await effectPlayer.setPlayerMode(PlayerMode.lowLatency);
+  await effectPlayer.setSource(AssetSource('audio/click.mp3'));
+  await effectPlayer.setVolume(0.5);
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  bool _audioStarted = false;
+  bool _wasPlayingBeforePause = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _tryPlayAudio();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive || state == AppLifecycleState.detached) {
+      if (themePlayer.state == PlayerState.playing) {
+        _wasPlayingBeforePause = true;
+        themePlayer.pause();
+      }
+    } else if (state == AppLifecycleState.resumed) {
+      if (_wasPlayingBeforePause) {
+        themePlayer.resume();
+        _wasPlayingBeforePause = false;
+      }
+    }
+  }
+
+  void _tryPlayAudio() async {
+    try {
+      if (themePlayer.state != PlayerState.playing) {
+        await themePlayer.play(AssetSource('audio/themeSong.mp3'));
+        _audioStarted = true;
+      }
+    } catch (e) {
+      // Autoplay might be blocked by the browser.
+    }
+  }
+
+  void _handleUserInteraction() {
+    if (!_audioStarted) {
+      _tryPlayAudio();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        // Provider 1: AuthService (Logic การ Login/Register)
-        Provider<AuthService>(create: (_) => AuthService()),
-
-        // Provider 2: User Stream (ฟังสถานะ Login แบบ Realtime)
-        // ถ้า User Login อยู่ ค่าจะเป็น User Object
-        // ถ้า User Logout ค่าจะเป็น null
-        StreamProvider<User?>(
-          create: (context) => context.read<AuthService>().user,
-          initialData: null,
-          catchError: (_, err) => null, // ป้องกัน error จุกจิกกรณี Auth หลุด
-        ),
-      ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false, // ปิดป้าย Debug มุมขวาบน
-        title: 'Habit U', // ชื่อแอป
-        // --- Theme Setting (Material 3) ---
-        theme: ThemeData(
-          useMaterial3: true, // ใช้ดีไซน์แบบใหม่
-          colorScheme: ColorScheme.fromSeed(
-            seedColor:
-                Colors.orange, // สีหลักของแอป (เข้ากับธีมสัตว์เลี้ยง/พลังงาน)
-            brightness: Brightness.light,
+    return Listener(
+      onPointerDown: (_) => _handleUserInteraction(),
+      behavior: HitTestBehavior.translucent,
+      child: MultiProvider(
+        providers: [
+          Provider<AuthService>(create: (_) => AuthService()),
+          StreamProvider<User?>(
+            create: (context) => context.read<AuthService>().user,
+            initialData: null,
+            catchError: (_, err) => null,
           ),
-          fontFamily: 'monospace', // (ถ้าคุณลง font แล้ว ใส่ตรงนี้ได้)
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Habit U',
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.orange,
+              brightness: Brightness.light,
+            ),
+            fontFamily: 'monospace',
+          ),
+          home: AuthenticationWrapper(),
         ),
-
-        // --- หน้าแรกที่จะแสดง ---
-        home: AuthenticationWrapper(),
       ),
     );
   }
