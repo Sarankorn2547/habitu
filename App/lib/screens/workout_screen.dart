@@ -13,8 +13,6 @@ class WorkoutScreen extends StatefulWidget {
   _WorkoutScreenState createState() => _WorkoutScreenState();
 }
 
-
-
 class _WorkoutScreenState extends State<WorkoutScreen> {
   // Category Selection
   String _selectedCategory = 'Cardio'; // 'Cardio' or 'Weight'
@@ -30,16 +28,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   int _elapsedSeconds = 0;
   bool _isTimerRunning = false;
   bool _isTimerMode = false; // Toggle for Cardio: Manual vs Timer
-
-  final Map<String, String> _exerciseEmojis = {
-    'Running': '🏃',
-    'Cycling': '🚴',
-    'Swimming': '🏊',
-    'Push Up': '💪',
-    'Sit Up': '🧘',
-    'Weight Lifting': '🏋️',
-    'Other': '🤸',
-  };
 
   final List<String> _cardioTypes = ['Running', 'Cycling', 'Swimming'];
   final List<String> _weightTypes = [
@@ -98,7 +86,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     setState(() {
       _selectedCategory = category;
       // Reset selected type based on category
-      _selectedType = category == 'Cardio' ? _cardioTypes.first : _weightTypes.first;
+      _selectedType = category == 'Cardio'
+          ? _cardioTypes.first
+          : _weightTypes.first;
       // Reset inputs
       _resetTimer();
       _isTimerMode = false;
@@ -146,17 +136,27 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
 
             // Exercise Icon
             Container(
-              height: 120, // Slightly smaller
+              height: 120,
               width: 120,
               decoration: BoxDecoration(
-                color: Colors.orange.shade50,
+                color: _selectedCategory == 'Cardio'
+                    ? Colors.orange.shade50
+                    : Colors.blue.shade50, // เปลี่ยนสีพื้นหลังตาม category
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.orange, width: 3),
+                border: Border.all(
+                  color: _selectedCategory == 'Cardio'
+                      ? Colors.orange
+                      : Colors.blue,
+                  width: 3,
+                ),
               ),
               child: Center(
-                child: Text(
-                  _exerciseEmojis[_selectedType] ?? '🤸',
-                  style: TextStyle(fontSize: 60),
+                child: Image.asset(
+                  // เช็คเงื่อนไขตรงนี้
+                  _selectedCategory == 'Cardio'
+                      ? 'assets/icons/stamina.png' // ถ้าเป็น Cardio
+                      : 'assets/icons/Muscle.png', // ถ้าเป็น Weight (เปลี่ยน path ตามไฟล์ของคุณ)
+                  height: 60,
                 ),
               ),
             ),
@@ -174,17 +174,27 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 child: DropdownButton<String>(
                   value: _selectedType,
                   isExpanded: true,
-                  icon: Icon(Icons.arrow_drop_down_circle, color: Colors.orange),
-                  items: (_selectedCategory == 'Cardio' ? _cardioTypes : _weightTypes)
-                      .map((type) {
-                    return DropdownMenuItem(
-                      value: type,
-                      child: Text(
-                        type,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    );
-                  }).toList(),
+                  icon: Icon(
+                    Icons.arrow_drop_down_circle,
+                    color: Colors.orange,
+                  ),
+                  items:
+                      (_selectedCategory == 'Cardio'
+                              ? _cardioTypes
+                              : _weightTypes)
+                          .map((type) {
+                            return DropdownMenuItem(
+                              value: type,
+                              child: Text(
+                                type,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            );
+                          })
+                          .toList(),
                   onChanged: (val) {
                     setState(() {
                       _selectedType = val!;
@@ -196,8 +206,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             SizedBox(height: 30),
 
             // Dynamic Content based on Category
-            if (_selectedCategory == 'Cardio') _buildCardioContent()
-            else _buildWeightContent(),
+            if (_selectedCategory == 'Cardio')
+              _buildCardioContent()
+            else
+              _buildWeightContent(),
 
             SizedBox(height: 40),
 
@@ -210,9 +222,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                 label: Text(
                   "FINISH & GET REWARDS",
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold),
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
@@ -222,24 +235,26 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   elevation: 5,
                 ),
                 onPressed: () async {
-                   if (_isTimerRunning) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Please stop the timer first!"))
-                      );
-                      return;
-                   }
-
-                  // Validate inputs
-                  if (_selectedCategory == 'Cardio' && _durationController.text.isEmpty) {
-                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Please enter duration"))
-                      );
+                  if (_isTimerRunning) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Please stop the timer first!")),
+                    );
                     return;
                   }
-                  if (_selectedCategory == 'Weight' && _repsController.text.isEmpty) {
-                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Please enter reps"))
-                      );
+
+                  // Validate inputs
+                  if (_selectedCategory == 'Cardio' &&
+                      _durationController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Please enter duration")),
+                    );
+                    return;
+                  }
+                  if (_selectedCategory == 'Weight' &&
+                      _repsController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Please enter reps")),
+                    );
                     return;
                   }
 
@@ -311,8 +326,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               activeThumbColor: Colors.orange,
               onChanged: (val) {
                 setState(() {
-                   _isTimerMode = val;
-                   if (!_isTimerMode) _stopTimer();
+                  _isTimerMode = val;
+                  if (!_isTimerMode) _stopTimer();
                 });
               },
             ),
@@ -323,26 +338,30 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         if (_isTimerMode) ...[
           Text(
             _formatTime(_elapsedSeconds),
-            style: TextStyle(fontSize: 60, fontWeight: FontWeight.bold, fontFamily: 'monospace'),
+            style: TextStyle(
+              fontSize: 60,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'monospace',
+            ),
           ),
           SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (!_isTimerRunning)
-              FloatingActionButton(
-                heroTag: "start",
-                backgroundColor: Colors.green,
-                onPressed: _startTimer,
-                child: Icon(Icons.play_arrow),
-              ),
+                FloatingActionButton(
+                  heroTag: "start",
+                  backgroundColor: Colors.green,
+                  onPressed: _startTimer,
+                  child: Icon(Icons.play_arrow),
+                ),
               if (_isTimerRunning)
-              FloatingActionButton(
-                heroTag: "stop",
-                backgroundColor: Colors.red,
-                onPressed: _stopTimer,
-                child: Icon(Icons.stop),
-              ),
+                FloatingActionButton(
+                  heroTag: "stop",
+                  backgroundColor: Colors.red,
+                  onPressed: _stopTimer,
+                  child: Icon(Icons.stop),
+                ),
               SizedBox(width: 20),
               FloatingActionButton(
                 heroTag: "reset",
@@ -355,7 +374,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         ] else ...[
           _buildInputLabel("DURATION (MINUTES)"),
           _buildTextField(_durationController, Icons.timer_outlined),
-        ]
+        ],
       ],
     );
   }
@@ -396,7 +415,10 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       child: Text(
         label,
         style: TextStyle(
-            fontWeight: FontWeight.bold, fontSize: 14, color: Colors.grey),
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+          color: Colors.grey,
+        ),
       ),
     );
   }
@@ -411,7 +433,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             color: Colors.grey.shade100,
             blurRadius: 5,
             offset: Offset(0, 2),
-          )
+          ),
         ],
       ),
       child: TextFormField(
@@ -444,23 +466,32 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("GREAT JOB!",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(
+          "GREAT JOB!",
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text("🎉", style: TextStyle(fontSize: 60)),
             SizedBox(height: 10),
-            Text("Pet stats successfully updated!", textAlign: TextAlign.center),
+            Text(
+              "Pet stats successfully updated!",
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text("AWESOME",
-                style:
-                    TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
+            child: Text(
+              "AWESOME",
+              style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),

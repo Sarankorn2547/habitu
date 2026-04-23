@@ -58,7 +58,11 @@ class _SleepPageState extends State<SleepPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("☀️", style: TextStyle(fontSize: 50)),
+            Image.asset(
+              'assets/icons/sunface.png',
+              height: 400, // กำหนดความสูงตามต้องการ
+              width: 400, // กำหนดความกว้างตามต้องการ
+            ),
             const SizedBox(height: 10),
             Text(
               "You slept for ${formatTime(secondsPassed)}",
@@ -68,8 +72,10 @@ class _SleepPageState extends State<SleepPage> {
             const SizedBox(height: 10),
             const Text(
               "+ EXP & Coins recovered!",
-              style:
-                  TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -134,16 +140,8 @@ class _SleepPageState extends State<SleepPage> {
               child: Center(
                 // เปลี่ยนเป็น Image.asset('assets/raccoon_sleep.png') เมื่อมีรูปนะครับ
                 child: isSleeping
-                    ? const Icon(
-                        Icons.nightlight_round,
-                        size: 100,
-                        color: Colors.indigo,
-                      )
-                    : const Icon(
-                        Icons.wb_sunny_rounded,
-                        size: 100,
-                        color: Colors.orange,
-                      ),
+                    ? Image.asset('assets/icons/sun1.png')
+                    : Image.asset('assets/icons/moon-2.png'),
               ),
             ),
             const SizedBox(height: 30),
