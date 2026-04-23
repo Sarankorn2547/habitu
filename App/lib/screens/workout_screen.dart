@@ -156,7 +156,8 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
                   _selectedCategory == 'Cardio'
                       ? 'assets/icons/stamina.png' // ถ้าเป็น Cardio
                       : 'assets/icons/Muscle.png', // ถ้าเป็น Weight (เปลี่ยน path ตามไฟล์ของคุณ)
-                  height: 60,
+                  height: 80, // เพิ่มความสูงจาก 200 เป็น 350
+                  width: 80, // กำหนดความกว้างควบคู่ไปด้วย
                 ),
               ),
             ),

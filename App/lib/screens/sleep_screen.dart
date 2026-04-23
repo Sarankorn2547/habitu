@@ -58,11 +58,7 @@ class _SleepPageState extends State<SleepPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              'assets/icons/sunface.png',
-              height: 400, // กำหนดความสูงตามต้องการ
-              width: 400, // กำหนดความกว้างตามต้องการ
-            ),
+            Image.asset('assets/icons/sunface.png'),
             const SizedBox(height: 10),
             Text(
               "You slept for ${formatTime(secondsPassed)}",
@@ -140,8 +136,8 @@ class _SleepPageState extends State<SleepPage> {
               child: Center(
                 // เปลี่ยนเป็น Image.asset('assets/raccoon_sleep.png') เมื่อมีรูปนะครับ
                 child: isSleeping
-                    ? Image.asset('assets/icons/sun1.png')
-                    : Image.asset('assets/icons/moon-2.png'),
+                    ? Image.asset('assets/icons/moon-2.png')
+                    : Image.asset('assets/icons/sun1.png'),
               ),
             ),
             const SizedBox(height: 30),
