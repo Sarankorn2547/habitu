@@ -194,17 +194,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         children: [
           ListTile(
-            leading: Icon(Icons.person),
+            leading: Image.asset('assets/icons/ChangeUsername.png'),
             title: Text("Change Username"),
             onTap: _showChangeUsernameDialog,
           ),
           ListTile(
-            leading: Icon(Icons.lock),
+            leading: Image.asset('assets/icons/ChangePassword.png'),
             title: Text("Change Password"),
             onTap: _showChangePasswordDialog,
           ),
           ListTile(
-            leading: Icon(Icons.music_note),
+            leading: Image.asset('assets/icons/BackgroundMusic.png'),
             title: Text("Background Music"),
             trailing: Switch(
               value: _isSoundEnabled,
@@ -246,7 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           Divider(),
           ListTile(
-            leading: Icon(Icons.delete_sweep, color: Colors.orange),
+            leading: Image.asset('assets/icons/DeleteAllData.png'),
             title: Text(
               "Delete All Data",
               style: TextStyle(color: Colors.orange),
@@ -254,13 +254,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: _showDeleteDataDialog,
           ),
           ListTile(
-            leading: Icon(Icons.delete_forever, color: Colors.red),
+            leading: Image.asset('assets/icons/DeleteAccount.png'),
             title: Text("Delete Account", style: TextStyle(color: Colors.red)),
             onTap: _showDeleteAccountDialog,
           ),
           Divider(),
           ListTile(
-            leading: Icon(Icons.logout, color: Colors.red),
+            leading: Image.asset('assets/icons/Logout.png'),
             title: Text("Logout", style: TextStyle(color: Colors.red)),
             onTap: () async {
               await _auth.signOut();

@@ -21,8 +21,9 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(MyApp());
   await themePlayer.setReleaseMode(ReleaseMode.loop); // ให้เล่นวนซ้ำ
-  await themePlayer.play(AssetSource('audio/themeSong.mp3'));
-  await themePlayer.setVolume(0.3);
+  await themePlayer.play(
+    AssetSource('audio/themeSong.mp3'),
+  ); // เล่นเพลงธีมตอนเปิดแอป);
 }
 
 class MyApp extends StatelessWidget {

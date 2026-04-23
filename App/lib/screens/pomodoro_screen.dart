@@ -76,10 +76,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              "🎉",
-              style: TextStyle(fontSize: 50),
-            ),
+            const Text("🎉", style: TextStyle(fontSize: 50)),
             const SizedBox(height: 10),
             Text(
               "You successfully focused for $settingTime minutes!",
@@ -88,8 +85,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
             const SizedBox(height: 10),
             const Text(
               "+ EXP & Coins earned!",
-              style:
-                  TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -140,16 +139,8 @@ class _PomodoroPageState extends State<PomodoroPage> {
               ),
               child: Center(
                 child: isStarted && !isPaused
-                    ? const Icon(
-                        Icons.hourglass_bottom,
-                        size: 100,
-                        color: Colors.purple,
-                      ) // แทนที่ด้วย Image.asset ของคุณ
-                    : const Icon(
-                        Icons.hourglass_empty,
-                        size: 100,
-                        color: Colors.grey,
-                      ),
+                    ? Image.asset('assets/icons/hourglass.png')
+                    : Image.asset('assets/icons/hourglass.png'),
               ),
             ),
             const SizedBox(height: 40),
