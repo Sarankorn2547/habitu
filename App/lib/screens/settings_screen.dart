@@ -13,7 +13,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final AuthService _auth = AuthService();
-  bool _isSoundEnabled = true;
   double _volume = 0.5;
 
   @override
@@ -21,7 +20,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     // ดึงระดับเสียงปัจจุบันจากเครื่องเล่นมาแสดงที่ Slider
     _volume = themePlayer.volume;
-    _isSoundEnabled = _volume > 0;
   }
 
   void _showChangeUsernameDialog() {
@@ -204,19 +202,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: _showChangePasswordDialog,
           ),
           ListTile(
+            title: Text("Background Music Volume"),
             leading: Image.asset('assets/icons/BackgroundMusic.png'),
-            title: Text("Background Music"),
-            trailing: Switch(
-              value: _isSoundEnabled,
-              activeThumbColor: Colors.orange,
-              onChanged: (val) {
-                setState(() {
-                  _isSoundEnabled = val;
-                  // ถ้าเปิดให้ใช้เสียงเดิม ถ้าปิดให้เป็น 0
-                  themePlayer.setVolume(val ? _volume : 0);
-                });
-              },
-            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -228,13 +215,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     value: _volume,
                     min: 0.0,
                     max: 1.0,
-                    divisions: 10,
+                    divisions: 100,
                     activeColor: Colors.orange,
                     label: "${(_volume * 100).toInt()}%",
                     onChanged: (val) {
                       setState(() {
                         _volume = val;
-                        _isSoundEnabled = val > 0;
                         themePlayer.setVolume(val);
                       });
                     },
