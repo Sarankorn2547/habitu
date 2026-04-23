@@ -10,6 +10,7 @@ import 'pomodoro_screen.dart';
 import 'sleep_screen.dart';
 import 'timeline_page.dart'; // Import หน้า Timeline ที่ปรับปรุงเป็นแบบมีปฏิทินแล้ว
 import 'style_screen.dart';
+import 'achievements_screen.dart';
 import '../main.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -288,15 +289,16 @@ class HomeScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  // Trophy -> Achievement (Coming Soon)
+                  // Trophy -> Achievement
                   _buildHitbox(
                     constraints: constraints,
                     rect: const Rect.fromLTRB(0, 980, 320, 1440),
                     onTap: () {
                       playClickSound();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Achievement Page Coming Soon! 🚧"),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AchievementsScreen(),
                         ),
                       );
                     },
