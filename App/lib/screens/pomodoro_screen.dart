@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/database_service.dart';
 import '../models/avatar_model.dart';
+import '../main.dart';
 
 class PomodoroPage extends StatefulWidget {
   final AvatarModel avatar;
@@ -29,6 +30,8 @@ class _PomodoroPageState extends State<PomodoroPage> {
       isPaused = false;
     });
 
+    themePlayer.pause();
+
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         if (timeLeft > 0) {
@@ -36,6 +39,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
         } else {
           _timer!.cancel();
           isStarted = false;
+          themePlayer.resume();
           _showTimeUpDialog(); // แจ้งเตือนเมื่อหมดเวลา
         }
       });
@@ -105,6 +109,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
   @override
   void dispose() {
     if (_timer != null) _timer!.cancel(); // เคลียร์หน่วยความจำเมื่อออกจากหน้า
+    themePlayer.resume();
     super.dispose();
   }
 
@@ -230,6 +235,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
                       setState(() {
                         isStarted = false;
                       });
+                      themePlayer.resume();
                     },
                     icon: const Icon(
                       Icons.cancel_outlined,
