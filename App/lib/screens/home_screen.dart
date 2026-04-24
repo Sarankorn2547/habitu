@@ -11,6 +11,7 @@ import 'sleep_screen.dart';
 import 'timeline_page.dart'; // Import หน้า Timeline ที่ปรับปรุงเป็นแบบมีปฏิทินแล้ว
 import 'style_screen.dart';
 import 'achievements_screen.dart';
+import 'photo_screen.dart';
 import '../main.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -148,6 +149,26 @@ class HomeScreen extends StatelessWidget {
                     "Lv.${avatar.strength}",
                   ),
                   const SizedBox(height: 20),
+
+                  // Camera / Photo Button
+                  GestureDetector(
+                    onTap: () {
+                      playClickSound();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PhotoScreen(avatar: avatar),
+                        ),
+                      );
+                    },
+                    child: Image.asset(
+                      'assets/photo/camera.png',
+                      width: 60,
+                      height: 60,
+                      filterQuality: FilterQuality.none,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -187,47 +208,37 @@ class HomeScreen extends StatelessWidget {
                       scale: 2.25,
                       alignment: Alignment.bottomCenter,
                       child: IgnorePointer(
-                        child: Stack(
-                          alignment: Alignment.bottomCenter,
-                          children: [
-                            Image.asset(
-                              'assets/pets/${avatar.species.toLowerCase()}/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}.png',
-                              width: 250 * scaleX,
-                              height: 250 * scaleY,
-                              fit: BoxFit.contain,
-                              errorBuilder: (c, e, s) => Image.asset(
-                                'assets/images/CAT.png',
+                        child: avatar.equippedHat.isNotEmpty
+                            ? Image.asset(
+                                'assets/pet_with_hat/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}/${avatar.equippedHat}.png',
                                 width: 250 * scaleX,
                                 height: 250 * scaleY,
                                 fit: BoxFit.contain,
-                              ),
-                            ),
-                            if (avatar.equippedHat.isNotEmpty)
-                              Positioned(
-                                top: 30 * scaleY,
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10 * scaleX,
-                                    vertical: 5 * scaleY,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(
-                                      8 * scaleX,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    avatar.equippedHat.toUpperCase(),
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 30 * scaleX,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                errorBuilder: (c, e, s) => Image.asset(
+                                  'assets/pets/${avatar.species.toLowerCase()}/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}.png',
+                                  width: 250 * scaleX,
+                                  height: 250 * scaleY,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (c2, e2, s2) => Image.asset(
+                                    'assets/images/CAT.png',
+                                    width: 250 * scaleX,
+                                    height: 250 * scaleY,
+                                    fit: BoxFit.contain,
                                   ),
                                 ),
+                              )
+                            : Image.asset(
+                                'assets/pets/${avatar.species.toLowerCase()}/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}.png',
+                                width: 250 * scaleX,
+                                height: 250 * scaleY,
+                                fit: BoxFit.contain,
+                                errorBuilder: (c, e, s) => Image.asset(
+                                  'assets/images/CAT.png',
+                                  width: 250 * scaleX,
+                                  height: 250 * scaleY,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
-                          ],
-                        ),
                       ),
                     ),
                   ),
