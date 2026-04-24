@@ -20,10 +20,13 @@ class _StyleScreenState extends State<StyleScreen> {
 
   final List<String> availableHats = [
     '', // None
-    'cap',
-    'crown',
-    'bow',
-    'glasses',
+    'hat1',
+    'hat2',
+    'hat3',
+    'hat4',
+    'hat5',
+    'hat6',
+    'hat7',
   ];
 
   List<AvatarModel> ownedPets = [];
@@ -253,43 +256,41 @@ class _StyleScreenState extends State<StyleScreen> {
                         ),
                       ],
                     ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Base Pet Image
-                        Image.asset(
-                          'assets/pets/${selectedSpecies.toLowerCase()}/${selectedSpecies.toLowerCase()}_stage$selectedStage.png',
-                          width: 150,
-                          height: 150,
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return const Icon(
-                              Icons.error,
-                              size: 50,
-                              color: Colors.red,
-                            );
-                          },
-                        ),
-                        // Optional Hat (Placeholder until assets exist)
-                        if (equippedHat.isNotEmpty)
-                          Positioned(
-                            top: 20,
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                equippedHat.toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                    child: Center(
+                      child: equippedHat.isNotEmpty
+                          ? Image.asset(
+                              'assets/pet_with_hat/${selectedSpecies.toLowerCase()}_stage$selectedStage/$equippedHat.png',
+                              width: 150,
+                              height: 150,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Fallback to base pet if composite image not found
+                                return Image.asset(
+                                  'assets/pets/${selectedSpecies.toLowerCase()}/${selectedSpecies.toLowerCase()}_stage$selectedStage.png',
+                                  width: 150,
+                                  height: 150,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (c, e, s) => const Icon(
+                                    Icons.error,
+                                    size: 50,
+                                    color: Colors.red,
+                                  ),
+                                );
+                              },
+                            )
+                          : Image.asset(
+                              'assets/pets/${selectedSpecies.toLowerCase()}/${selectedSpecies.toLowerCase()}_stage$selectedStage.png',
+                              width: 150,
+                              height: 150,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.error,
+                                  size: 50,
+                                  color: Colors.red,
+                                );
+                              },
                             ),
-                          ),
-                      ],
                     ),
                   ),
                 ),
@@ -430,7 +431,7 @@ class _StyleScreenState extends State<StyleScreen> {
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+        crossAxisCount: 4,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
@@ -453,36 +454,55 @@ class _StyleScreenState extends State<StyleScreen> {
                 width: 2,
               ),
             ),
-            child: Center(
-              child: hat.isEmpty
-                  ? const Text(
+            child: hat.isEmpty
+                ? const Center(
+                    child: Text(
                       'None',
                       style: TextStyle(fontWeight: FontWeight.bold),
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        if (!isOwned)
-                          const Icon(Icons.lock, size: 20, color: Colors.grey),
-                        Text(
-                          hat.toUpperCase(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: isOwned ? Colors.black : Colors.grey,
-                          ),
-                        ),
-                        if (!isOwned)
-                          const Text(
-                            '200 Coins',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.orange,
+                    ),
+                  )
+                : Stack(
+                    children: [
+                      // Hat thumbnail image
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Opacity(
+                            opacity: isOwned ? 1.0 : 0.4,
+                            child: Image.asset(
+                              'assets/pet_with_hat/hat/$hat.png',
+                              fit: BoxFit.contain,
+                              errorBuilder: (c, e, s) => const Icon(
+                                Icons.error,
+                                size: 24,
+                                color: Colors.red,
+                              ),
                             ),
                           ),
-                      ],
-                    ),
-            ),
+                        ),
+                      ),
+                      // Lock overlay for unowned hats
+                      if (!isOwned)
+                        Positioned(
+                          bottom: 4,
+                          left: 0,
+                          right: 0,
+                          child: Column(
+                            children: [
+                              const Icon(Icons.lock, size: 16, color: Colors.grey),
+                              const Text(
+                                '200',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
           ),
         );
       },

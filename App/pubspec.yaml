@@ -45,6 +45,7 @@ dependencies:
   fl_chart: ^1.1.1 # แนะนำ: สำหรับทำกราฟโชว์ Stat ในหน้า Homepage หรือหน้า Workout
   google_fonts: ^8.0.1 # แนะนำ: เพื่อให้ฟอนต์ในแอปสวยงามและดูทันสมัย
   table_calendar: ^3.2.0
+  gal: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -86,8 +87,16 @@ flutter:
     - assets/room_obj/
     - assets/pets/cat/
     - assets/pets/dog/
-    - assets/hats/
     - assets/audio/
+    - assets/photo/
+    - assets/app_logo/
+    - assets/pet_with_hat/hat/
+    - assets/pet_with_hat/cat_stage1/
+    - assets/pet_with_hat/cat_stage2/
+    - assets/pet_with_hat/cat_stage3/
+    - assets/pet_with_hat/dog_stage1/
+    - assets/pet_with_hat/dog_stage2/
+    - assets/pet_with_hat/dog_stage3/
   
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
