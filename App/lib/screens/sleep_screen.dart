@@ -133,10 +133,6 @@ class _SleepPageState extends State<SleepPage> {
             Container(
               width: 250,
               height: 250,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(20),
-              ),
               child: Center(
                 // เปลี่ยนเป็น Image.asset('assets/raccoon_sleep.png') เมื่อมีรูปนะครับ
                 child: isSleeping
