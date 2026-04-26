@@ -13,9 +13,46 @@ import 'style_screen.dart';
 import 'achievements_screen.dart';
 import 'photo_screen.dart';
 import '../main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _showGuide = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkFirstTime();
+  }
+
+  Future<void> _checkFirstTime() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasSeenGuide = prefs.getBool('hasSeenGuide') ?? false;
+    if (!hasSeenGuide) {
+      setState(() {
+        _showGuide = true;
+      });
+      await prefs.setBool('hasSeenGuide', true);
+    }
+  }
+
+  void _showManualGuide() {
+    setState(() {
+      _showGuide = true;
+    });
+  }
+
+  void _closeGuide() {
+    setState(() {
+      _showGuide = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -214,6 +251,15 @@ class HomeScreen extends StatelessWidget {
                               },
                             ),
                             IconButton(
+                              padding: const EdgeInsets.only(right: 8),
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(Icons.help_outline, color: Color(0xFF927442)),
+                              onPressed: () {
+                                playClickSound();
+                                _showManualGuide();
+                              },
+                            ),
+                            IconButton(
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
                               icon: const Icon(Icons.settings, color: Color(0xFF927442)),
@@ -231,6 +277,45 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (_showGuide)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      onTap: _closeGuide,
+                      child: Container(
+                        color: Colors.black.withOpacity(0.6),
+                        child: Center(
+                          child: GestureDetector(
+                            onTap: () {}, // Stop propagation to the background
+                            child: Padding(
+                              padding: const EdgeInsets.all(20.0),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                alignment: Alignment.topRight,
+                                children: [
+                                  Image.asset(
+                                    'assets/room_obj/Help.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                  Positioned(
+                                    top: -10,
+                                    right: -10,
+                                    child: IconButton(
+                                      icon: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 30,
+                                      ),
+                                      onPressed: _closeGuide,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
