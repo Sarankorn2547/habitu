@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../main.dart';
 import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -193,8 +194,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                     ),
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: (){
+                        playClickSound();
+                        setState(() => _obscurePassword = !_obscurePassword);
+                        } 
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -228,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
               SizedBox(
                 height: 56,
                 child: FilledButton(
-                  onPressed: _isLoading ? null : _submitForm,
+                  onPressed: _isLoading ? null : () { playClickSound(); _submitForm(); },
                   style: FilledButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -262,6 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     TextButton(
                       onPressed: () {
+                        playClickSound();
                         setState(() {
                           _selectedIndex = 1; // Switch to Register
                           _showError(""); // Clear errors
@@ -270,7 +274,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text("Register"),
                     ),
                     TextButton(
-                      onPressed: _forgotPassword,
+                      onPressed: () {
+                        playClickSound();
+                        _forgotPassword();
+                      },
                       child: Text("Forgot Password?"),
                     ),
                   ],
@@ -280,6 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () {
+                      playClickSound();
                       setState(() {
                         _selectedIndex = 0; // Switch to Login
                         _showError(""); // Clear errors

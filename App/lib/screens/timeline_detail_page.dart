@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import '../main.dart';
 
 class TimelineDetailPage extends StatelessWidget {
   final DateTime selectedDate;
@@ -45,7 +46,10 @@ class TimelineDetailPage extends StatelessWidget {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, color: Colors.purple, size: 40),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            playClickSound();
+            Navigator.pop(context);
+          },
         ),
         title: const Text(
           'DAILY SUMMARY',

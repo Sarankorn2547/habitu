@@ -104,6 +104,7 @@ class _SleepPageState extends State<SleepPage> with WidgetsBindingObserver {
         actions: [
           TextButton(
             onPressed: () {
+              playClickSound();
               Navigator.pop(context);
               setState(() {
                 secondsPassed = 0; // Reset for next sleep
@@ -139,7 +140,10 @@ class _SleepPageState extends State<SleepPage> with WidgetsBindingObserver {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, color: Colors.purple, size: 40),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            playClickSound();
+            Navigator.pop(context);
+          },
         ),
         title: const Text(
           'Sleep Time',
@@ -186,7 +190,10 @@ class _SleepPageState extends State<SleepPage> with WidgetsBindingObserver {
 
             // --- ปุ่ม Awake / Up ---
             GestureDetector(
-              onTap: toggleSleep,
+              onTap: () {
+              playClickSound();
+              toggleSleep();
+            },
               child: Column(
                 children: [
                   Icon(

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/database_service.dart';
 import '../models/avatar_model.dart';
+import '../main.dart';
 
 class StyleScreen extends StatefulWidget {
   final AvatarModel currentAvatar;
@@ -117,39 +118,29 @@ class _StyleScreenState extends State<StyleScreen> {
   }
 
   void _promptAdoption(String species) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text("Adopt $species?"),
-        content: Text(
-          "It costs 500 coins to unlock this pet.\n\nYou have: $currentCoins coins.",
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (currentCoins >= 500) {
-                Navigator.pop(context); // Close dialog
-                setState(() => isLoading = true);
-                final user = Provider.of<User?>(context, listen: false)!;
-                final dbService = DatabaseService(uid: user.uid);
-                await dbService.adoptPet(species, 500);
-                if (mounted)
-                  Navigator.pop(context); // Close style screen to show new pet
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Not enough coins!')),
-                );
-              }
-            },
-            child: const Text("Adopt (500)"),
-          ),
-        ],
-      ),
-    );
+    showDialog(context: context, builder: (_) => AlertDialog(
+      title: Text("Adopt $species?"),
+      content: Text("It costs 500 coins to unlock this pet.\n\nYou have: $currentCoins coins."),
+      actions: [
+        TextButton(onPressed: () { playClickSound(); Navigator.pop(context); }, child: const Text("Cancel")),
+        ElevatedButton(
+          onPressed: () async {
+            playClickSound();
+            if (currentCoins >= 500) {
+              Navigator.pop(context); // Close dialog
+              setState(() => isLoading = true);
+              final user = Provider.of<User?>(context, listen: false)!;
+              final dbService = DatabaseService(uid: user.uid);
+              await dbService.adoptPet(species, 500);
+              if (mounted) Navigator.pop(context); // Close style screen to show new pet
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Not enough coins!')));
+            }
+          },  
+          child: const Text("Adopt (500)"),
+        )
+      ]
+    ));
   }
 
   void _handleHatTap(String hat) {
@@ -172,11 +163,12 @@ class _StyleScreenState extends State<StyleScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () { playClickSound(); Navigator.pop(context); },
             child: const Text("Cancel"),
           ),
           ElevatedButton(
             onPressed: () async {
+              playClickSound();
               if (currentCoins >= 200) {
                 Navigator.pop(context); // Close dialog
                 setState(() => isLoading = true);
@@ -212,7 +204,10 @@ class _StyleScreenState extends State<StyleScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, color: Colors.purple, size: 40),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            playClickSound();
+            Navigator.pop(context);
+          },
         ),
         title: const Text(
           'STYLE YOUR PET',
@@ -223,7 +218,10 @@ class _StyleScreenState extends State<StyleScreen> {
         elevation: 0,
         actions: [
           TextButton(
-            onPressed: _saveChanges,
+            onPressed: () {
+              playClickSound();
+              _saveChanges();
+            },
             child: const Text(
               'Save',
               style: TextStyle(
@@ -345,7 +343,10 @@ class _StyleScreenState extends State<StyleScreen> {
               title: species,
               isSelected: isSelected,
               isLocked: !isOwned,
-              onTap: () => _handleSpeciesTap(species),
+              onTap: () {
+                playClickSound();
+                _handleSpeciesTap(species);
+              },
               icon: Icons.pets,
             );
           }).toList(),
@@ -378,6 +379,7 @@ class _StyleScreenState extends State<StyleScreen> {
 
     return GestureDetector(
       onTap: () {
+        playClickSound();
         if (!isLocked) {
           setState(() {
             selectedStage = stage;
@@ -442,7 +444,10 @@ class _StyleScreenState extends State<StyleScreen> {
         bool isSelected = equippedHat == hat;
 
         return GestureDetector(
-          onTap: () => _handleHatTap(hat),
+          onTap: () {
+            playClickSound();
+            _handleHatTap(hat);
+          },
           child: Container(
             decoration: BoxDecoration(
               color: isSelected

@@ -116,7 +116,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              playClickSound();
+              Navigator.pop(context);
+            },
             child: const Text("GREAT!"),
           ),
         ],
@@ -139,7 +142,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, color: Colors.purple, size: 40),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            playClickSound();
+            Navigator.pop(context);
+          },
         ),
         title: const Text(
           'FOCUSTIME',
@@ -189,6 +195,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
                   children: [
                     IconButton(
                       onPressed: () {
+                        playClickSound();
                         if (settingTime > 1) {
                           setState(() {
                             settingTime--;
@@ -224,6 +231,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
                     ),
                     IconButton(
                       onPressed: () {
+                        playClickSound();
                         setState(() {
                           settingTime++;
                           _timeController.text = settingTime.toString();
@@ -237,6 +245,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
+                  playClickSound();
                   setState(() {
                     timeLeft = settingTime * 60; // แปลงนาทีเป็นวินาที
                   });
@@ -276,6 +285,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
                   // ปุ่มยกเลิก
                   IconButton(
                     onPressed: () {
+                      playClickSound();
                       _timer?.cancel();
                       setState(() {
                         isStarted = false;
@@ -294,7 +304,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
                   const SizedBox(width: 40),
                   // ปุ่มพัก/ไปต่อ
                   IconButton(
-                    onPressed: isPaused ? startTimer : pauseTimer,
+                    onPressed: () {
+                      playClickSound();
+                      isPaused ? startTimer() : pauseTimer();
+                    },
                     icon: Icon(
                       isPaused
                           ? Icons.play_circle_fill

@@ -550,6 +550,7 @@ class HomeScreen extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () async {
+                playClickSound();
                 if (controller.text.trim().isNotEmpty) {
                   await dbService.updateAvatarName(
                     avatar.id,
