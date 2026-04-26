@@ -59,6 +59,16 @@ class DatabaseService {
       return (snapshot.data() as Map<String, dynamic>)['coins'] ?? 0;
     });
   }
+
+  // Stream Achievements
+  Stream<List<String>> get myAchievements {
+    return userCollection.doc(uid).snapshots().map((snapshot) {
+      if (!snapshot.exists) return [];
+      var data = snapshot.data() as Map<String, dynamic>;
+      List<dynamic> achievements = data['unlocked_achievements'] ?? [];
+      return achievements.map((e) => e.toString()).toList();
+    });
+  }
   // Update Avatar Name
   Future<void> updateAvatarName(String avatarId, String newName) async {
     await avatarCollection.doc(avatarId).update({'name': newName});
@@ -256,9 +266,19 @@ class DatabaseService {
       'selectedStage': newSelectedStage,
     });
     
-    batch.set(userCollection.doc(uid), {
+    // Achievements for Strength
+    List<String> newAchievements = [];
+    if (newStrength >= 5 && currentAvatar.strength < 5) newAchievements.add('str_5');
+    if (newStrength >= 10 && currentAvatar.strength < 10) newAchievements.add('str_10');
+
+    Map<String, dynamic> userUpdates = {
       'coins': FieldValue.increment(totalCoinGained)
-    }, SetOptions(merge: true));
+    };
+    if (newAchievements.isNotEmpty) {
+      userUpdates['unlocked_achievements'] = FieldValue.arrayUnion(newAchievements);
+    }
+    
+    batch.set(userCollection.doc(uid), userUpdates, SetOptions(merge: true));
 
     await batch.commit();
   }
@@ -326,9 +346,19 @@ class DatabaseService {
       'selectedStage': newSelectedStage,
     });
 
-    batch.set(userCollection.doc(uid), {
+    // Achievements for Intelligence
+    List<String> newAchievements = [];
+    if (newInt >= 5 && currentAvatar.intelligence < 5) newAchievements.add('int_5');
+    if (newInt >= 10 && currentAvatar.intelligence < 10) newAchievements.add('int_10');
+
+    Map<String, dynamic> userUpdates = {
       'coins': FieldValue.increment(totalCoinGained)
-    }, SetOptions(merge: true));
+    };
+    if (newAchievements.isNotEmpty) {
+      userUpdates['unlocked_achievements'] = FieldValue.arrayUnion(newAchievements);
+    }
+
+    batch.set(userCollection.doc(uid), userUpdates, SetOptions(merge: true));
 
     await batch.commit();
   }
@@ -397,9 +427,19 @@ class DatabaseService {
       'selectedStage': newSelectedStage,
     });
 
-    batch.set(userCollection.doc(uid), {
+    // Achievements for Mind
+    List<String> newAchievements = [];
+    if (newMind >= 5 && currentAvatar.mind < 5) newAchievements.add('mind_5');
+    if (newMind >= 10 && currentAvatar.mind < 10) newAchievements.add('mind_10');
+
+    Map<String, dynamic> userUpdates = {
       'coins': FieldValue.increment(totalCoinGained)
-    }, SetOptions(merge: true));
+    };
+    if (newAchievements.isNotEmpty) {
+      userUpdates['unlocked_achievements'] = FieldValue.arrayUnion(newAchievements);
+    }
+
+    batch.set(userCollection.doc(uid), userUpdates, SetOptions(merge: true));
 
     await batch.commit();
   }

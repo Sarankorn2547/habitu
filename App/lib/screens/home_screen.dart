@@ -10,6 +10,8 @@ import 'pomodoro_screen.dart';
 import 'sleep_screen.dart';
 import 'timeline_page.dart'; // Import หน้า Timeline ที่ปรับปรุงเป็นแบบมีปฏิทินแล้ว
 import 'style_screen.dart';
+import 'achievements_screen.dart';
+import 'photo_screen.dart';
 import '../main.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -47,108 +49,189 @@ class HomeScreen extends StatelessWidget {
             LevelService.getExpToNextLevel(avatar.strength);
 
         return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          backgroundColor: const Color(0xFFFFF6E0),
+          body: SafeArea(
+            child: Stack(
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                // Body content (Room & Stats)
+                Column(
                   children: [
-                    Text(
-                      "${avatar.name} House",
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    GestureDetector(
-                      onTap: () {
-                        playClickSound();
-                        _showRenameDialog(context, dbService, avatar);
-                      },
-                      child: const Icon(
-                        Icons.edit,
-                        size: 18,
-                        color: Colors.grey,
+                    Expanded(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  // Added space at top so content isn't fully hidden behind the top bar
+                                  const SizedBox(height: 70),
+                                  // --- ส่วนห้อง Isometric (Room Area) ---
+                                  _buildIsometricRoom(context, avatar),
+
+                                  // --- ส่วนแสดงสัตว์เลี้ยง (Pet Stats Area) ---
+                                  Container(
+                                    width: double.infinity,
+                                    color: const Color(0xFFD1B187),
+                                    padding: const EdgeInsets.symmetric(vertical: 24),
+                                    child: Column(
+                                      children: [
+                                        _buildStatBar(
+                                          "EXP",
+                                          petExpPct,
+                                          Colors.greenAccent.shade400,
+                                          "Lv.${avatar.level}",
+                                        ),
+                                        const SizedBox(height: 12),
+                                        _buildStatBar(
+                                          "INT",
+                                          intExpPct,
+                                          Colors.greenAccent.shade400,
+                                          "Lv.${avatar.intelligence}",
+                                        ),
+                                        const SizedBox(height: 12),
+                                        _buildStatBar(
+                                          "MND",
+                                          mindExpPct,
+                                          Colors.greenAccent.shade400,
+                                          "Lv.${avatar.mind}",
+                                        ),
+                                        const SizedBox(height: 12),
+                                        _buildStatBar(
+                                          "STR",
+                                          strExpPct,
+                                          Colors.greenAccent.shade400,
+                                          "Lv.${avatar.strength}",
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+
+                                  // Camera / Photo Button
+                                  GestureDetector(
+                                    onTap: () {
+                                      playClickSound();
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => PhotoScreen(avatar: avatar),
+                                        ),
+                                      );
+                                    },
+                                    child: Image.asset(
+                                      'assets/photo/camera.png',
+                                      width: 60,
+                                      height: 60,
+                                      filterQuality: FilterQuality.none,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ],
                 ),
-                Text(
-                  "LV.${avatar.level} ${avatar.name.toUpperCase()} (HP ${avatar.level * 10}/${avatar.level * 10})",
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+                
+                // Custom Top Bar Overlay
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF6E0).withOpacity(0.85),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          offset: const Offset(0, 2),
+                          blurRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      "${avatar.name} House",
+                                      style: const TextStyle(
+                                        color: Color(0xFF4D4539),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 24,
+                                        letterSpacing: 1.0,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  GestureDetector(
+                                    onTap: () {
+                                      playClickSound();
+                                      _showRenameDialog(context, dbService, avatar);
+                                    },
+                                    child: const Icon(
+                                      Icons.edit,
+                                      size: 18,
+                                      color: Color(0xFF927442),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                "Lv.${avatar.level} ${avatar.name.toUpperCase()} (HP ${avatar.level * 10}/${avatar.level * 10})",
+                                style: const TextStyle(
+                                  color: Color(0xFF927442),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            StreamBuilder<int>(
+                              stream: dbService.myCoins,
+                              builder: (context, coinSnap) {
+                                return _buildCoinDisplay(coinSnap.data ?? 0);
+                              },
+                            ),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              icon: const Icon(Icons.settings, color: Color(0xFF927442)),
+                              onPressed: () {
+                                playClickSound();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => SettingsScreen()),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
-            ),
-            actions: [
-              StreamBuilder<int>(
-                stream: dbService.myCoins,
-                builder: (context, coinSnap) {
-                  return _buildCoinDisplay(coinSnap.data ?? 0);
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings, color: Colors.grey),
-                onPressed: () {
-                  playClickSound();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => SettingsScreen()),
-                  );
-                },
-              ),
-            ],
-          ),
-          body: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // --- ส่วนห้อง Isometric (Room Area) ---
-                  _buildIsometricRoom(context, avatar),
-
-                  const SizedBox(height: 20),
-
-                  // --- ส่วนแสดงสัตว์เลี้ยง (Pet Stats Area) ---
-                  _buildStatBar(
-                    "EXP",
-                    petExpPct,
-                    Colors.greenAccent.shade400,
-                    "Lv.${avatar.level}",
-                  ),
-                  const SizedBox(height: 8),
-                  _buildStatBar(
-                    "INT",
-                    intExpPct,
-                    Colors.blueAccent.shade200,
-                    "Lv.${avatar.intelligence}",
-                  ),
-                  const SizedBox(height: 8),
-                  _buildStatBar(
-                    "MND",
-                    mindExpPct,
-                    Colors.indigoAccent.shade200,
-                    "Lv.${avatar.mind}",
-                  ),
-                  const SizedBox(height: 8),
-                  _buildStatBar(
-                    "STR",
-                    strExpPct,
-                    Colors.redAccent.shade200,
-                    "Lv.${avatar.strength}",
-                  ),
-                  const SizedBox(height: 20),
-                ],
-              ),
             ),
           ),
         );
@@ -158,18 +241,31 @@ class HomeScreen extends StatelessWidget {
 
   Widget _buildIsometricRoom(BuildContext context, AvatarModel avatar) {
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-        child: AspectRatio(
-          aspectRatio: 2080 / 1760,
+      child: AspectRatio(
+        aspectRatio: 2080 / 1760,
           child: LayoutBuilder(
             builder: (context, constraints) {
               double scaleX = constraints.maxWidth / 2080;
               double scaleY = constraints.maxHeight / 1760;
+              
               return Stack(
+                clipBehavior: Clip.none,
                 children: [
+                  // Background Image (room_normal.png)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Image.asset('assets/photo/room_normal.png', fit: BoxFit.fitWidth),
+                  ),
+
                   // Combined Room Image
-                  Image.asset('assets/room_obj/room.png', fit: BoxFit.contain),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Image.asset('assets/room_obj/room.png', fit: BoxFit.fitWidth),
+                  ),
 
                   // Pet inside room
                   Positioned(
@@ -186,47 +282,37 @@ class HomeScreen extends StatelessWidget {
                       scale: 2.25,
                       alignment: Alignment.bottomCenter,
                       child: IgnorePointer(
-                        child: Stack(
-                          alignment: Alignment.bottomCenter,
-                          children: [
-                            Image.asset(
-                              'assets/pets/${avatar.species.toLowerCase()}/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}.png',
-                              width: 250 * scaleX,
-                              height: 250 * scaleY,
-                              fit: BoxFit.contain,
-                              errorBuilder: (c, e, s) => Image.asset(
-                                'assets/images/CAT.png',
+                        child: avatar.equippedHat.isNotEmpty
+                            ? Image.asset(
+                                'assets/pet_with_hat/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}/${avatar.equippedHat}.png',
                                 width: 250 * scaleX,
                                 height: 250 * scaleY,
                                 fit: BoxFit.contain,
-                              ),
-                            ),
-                            if (avatar.equippedHat.isNotEmpty)
-                              Positioned(
-                                top: 30 * scaleY,
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 10 * scaleX,
-                                    vertical: 5 * scaleY,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.5),
-                                    borderRadius: BorderRadius.circular(
-                                      8 * scaleX,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    avatar.equippedHat.toUpperCase(),
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 30 * scaleX,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                errorBuilder: (c, e, s) => Image.asset(
+                                  'assets/pets/${avatar.species.toLowerCase()}/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}.png',
+                                  width: 250 * scaleX,
+                                  height: 250 * scaleY,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (c2, e2, s2) => Image.asset(
+                                    'assets/images/CAT.png',
+                                    width: 250 * scaleX,
+                                    height: 250 * scaleY,
+                                    fit: BoxFit.contain,
                                   ),
                                 ),
+                              )
+                            : Image.asset(
+                                'assets/pets/${avatar.species.toLowerCase()}/${avatar.species.toLowerCase()}_stage${avatar.selectedStage < 1 ? 1 : avatar.selectedStage}.png',
+                                width: 250 * scaleX,
+                                height: 250 * scaleY,
+                                fit: BoxFit.contain,
+                                errorBuilder: (c, e, s) => Image.asset(
+                                  'assets/images/CAT.png',
+                                  width: 250 * scaleX,
+                                  height: 250 * scaleY,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
-                          ],
-                        ),
                       ),
                     ),
                   ),
@@ -235,7 +321,7 @@ class HomeScreen extends StatelessWidget {
                   // Wardrobe -> Style (Coming Soon)
                   _buildHitbox(
                     constraints: constraints,
-                    rect: const Rect.fromLTRB(1600, 640, 2080, 1360),
+                    rect: const Rect.fromLTRB(1590, 630, 2080, 1370),
                     onTap: () {
                       playClickSound();
                       Navigator.push(
@@ -249,7 +335,7 @@ class HomeScreen extends StatelessWidget {
                   // Bed -> Sleep Page
                   _buildHitbox(
                     constraints: constraints,
-                    rect: const Rect.fromLTRB(800, 640, 1600, 1200),
+                    rect: const Rect.fromLTRB(780, 620, 1620, 1220),
                     onTap: () {
                       playClickSound();
                       Navigator.push(
@@ -263,7 +349,7 @@ class HomeScreen extends StatelessWidget {
                   // Calendar -> Timeline Page
                   _buildHitbox(
                     constraints: constraints,
-                    rect: const Rect.fromLTRB(1190, 230, 1370, 480),
+                    rect: const Rect.fromLTRB(1170, 210, 1390, 500),
                     onTap: () {
                       playClickSound();
                       Navigator.push(
@@ -277,7 +363,7 @@ class HomeScreen extends StatelessWidget {
                   // Desk -> Pomodoro / Focus Page
                   _buildHitbox(
                     constraints: constraints,
-                    rect: const Rect.fromLTRB(320, 780, 800, 1270),
+                    rect: const Rect.fromLTRB(300, 760, 820, 1290),
                     onTap: () {
                       playClickSound();
                       Navigator.push(
@@ -288,15 +374,16 @@ class HomeScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  // Trophy -> Achievement (Coming Soon)
+                  // Trophy -> Achievement
                   _buildHitbox(
                     constraints: constraints,
-                    rect: const Rect.fromLTRB(0, 980, 320, 1440),
+                    rect: const Rect.fromLTRB(0, 960, 340, 1460),
                     onTap: () {
                       playClickSound();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Achievement Page Coming Soon! 🚧"),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const AchievementsScreen(),
                         ),
                       );
                     },
@@ -304,7 +391,7 @@ class HomeScreen extends StatelessWidget {
                   // Dumbell -> Workout Page
                   _buildHitbox(
                     constraints: constraints,
-                    rect: const Rect.fromLTRB(80, 1570, 230, 1710),
+                    rect: const Rect.fromLTRB(60, 1450, 350, 1730),
                     onTap: () {
                       playClickSound();
                       Navigator.push(
@@ -320,7 +407,6 @@ class HomeScreen extends StatelessWidget {
             },
           ),
         ),
-      ),
     );
   }
 
@@ -359,12 +445,12 @@ class HomeScreen extends StatelessWidget {
       margin: const EdgeInsets.only(right: 8, top: 12, bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
       decoration: BoxDecoration(
-        color: Colors.amber.shade100,
+        color: const Color(0xFFFDF0D5),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.amber.shade700, width: 2),
+        border: Border.all(color: const Color(0xFF927442), width: 1.5),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min, // Keep it compact
+        mainAxisSize: MainAxisSize.min,
         children: [
           Image.asset(
             "assets/icons/money_bag.png",
@@ -375,9 +461,10 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             "$coins",
-            style: TextStyle(
-              color: Colors.amber.shade900,
+            style: const TextStyle(
+              color: Color(0xFF927442),
               fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
         ],
@@ -391,19 +478,23 @@ class HomeScreen extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 35,
+            width: 40,
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              style: const TextStyle(
+                color: Color(0xFF4D4539),
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
           ),
           Expanded(
             child: Container(
               height: 14,
               decoration: BoxDecoration(
-                color: Colors.grey.shade200,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(7),
-                border: Border.all(color: Colors.grey.shade300),
+                border: Border.all(color: Colors.white),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
@@ -417,11 +508,15 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           SizedBox(
-            width: 45,
+            width: 40,
             child: Text(
               suffix,
               textAlign: TextAlign.end,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 10),
+              style: const TextStyle(
+                color: Color(0xFF4D4539),
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
             ),
           ),
         ],

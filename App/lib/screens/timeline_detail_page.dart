@@ -143,7 +143,12 @@ class TimelineDetailPage extends StatelessWidget {
                        if (category == 'Cardio') {
                          detail = "${data['duration_min'] ?? 0} min";
                        } else {
-                         detail = "${data['reps'] ?? 0} reps";
+                         int sets = data['sets'] ?? 0;
+                         if (sets > 0) {
+                           detail = "$sets sets x ${data['reps'] ?? 0} reps";
+                         } else {
+                           detail = "${data['reps'] ?? 0} reps";
+                         }
                        }
                        workouts.add("$type ($detail)");
                     }
@@ -179,13 +184,13 @@ class TimelineDetailPage extends StatelessWidget {
                               _buildRow(
                                 Colors.orange,
                                 "Focus Time",
-                                "${(focusSecs / 3600).toStringAsFixed(1)} Hr",
+                                _formatDuration(focusSecs),
                               ),
                               const SizedBox(height: 10),
                               _buildRow(
                                 Colors.blue,
                                 "Sleep Time",
-                                "${(sleepSecs / 3600).toStringAsFixed(1)} Hr",
+                                _formatDuration(sleepSecs),
                               ),
                             ],
                           ),
@@ -252,5 +257,12 @@ class TimelineDetailPage extends StatelessWidget {
         Text(value, style: const TextStyle(color: Colors.white)),
       ],
     );
+  }
+
+  String _formatDuration(double totalSeconds) {
+    int hours = totalSeconds ~/ 3600;
+    int minutes = ((totalSeconds % 3600) ~/ 60);
+    int seconds = (totalSeconds % 60).toInt();
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }

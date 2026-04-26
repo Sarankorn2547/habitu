@@ -14,10 +14,26 @@ class SleepPage extends StatefulWidget {
   State<SleepPage> createState() => _SleepPageState();
 }
 
-class _SleepPageState extends State<SleepPage> {
+class _SleepPageState extends State<SleepPage> with WidgetsBindingObserver {
   int secondsPassed = 0; // เก็บเวลาที่นับเดินหน้า
   Timer? _timer;
   bool isSleeping = false; // สถานะว่ากำลังหลับอยู่หรือไม่
+  DateTime? _sleepStartTime;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && isSleeping && _sleepStartTime != null) {
+      setState(() {
+        secondsPassed = DateTime.now().difference(_sleepStartTime!).inSeconds;
+      });
+    }
+  }
 
   // ฟังก์ชันเริ่ม/หยุดการนับเวลา
   void toggleSleep() {
@@ -26,15 +42,24 @@ class _SleepPageState extends State<SleepPage> {
     });
 
     if (isSleeping) {
+      themePlayer.pause();
+      _sleepStartTime = DateTime.now();
+      secondsPassed = 0;
       // เริ่มนับเวลาเดินหน้า
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() {
-          secondsPassed++;
-        });
+        if (_sleepStartTime != null) {
+          setState(() {
+            secondsPassed = DateTime.now().difference(_sleepStartTime!).inSeconds;
+          });
+        }
       });
     } else {
+      themePlayer.resume();
       // หยุดนับเวลา
       _timer?.cancel();
+      if (_sleepStartTime != null) {
+        secondsPassed = DateTime.now().difference(_sleepStartTime!).inSeconds;
+      }
       _handleWakeUp();
     }
   }
@@ -59,7 +84,7 @@ class _SleepPageState extends State<SleepPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("☀️", style: TextStyle(fontSize: 50)),
+            Image.asset('assets/icons/sunface.png'),
             const SizedBox(height: 10),
             Text(
               "You slept for ${formatTime(secondsPassed)}",
@@ -69,8 +94,10 @@ class _SleepPageState extends State<SleepPage> {
             const SizedBox(height: 10),
             const Text(
               "+ EXP & Coins recovered!",
-              style:
-                  TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -100,7 +127,9 @@ class _SleepPageState extends State<SleepPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
+    themePlayer.resume();
     super.dispose();
   }
 
@@ -132,23 +161,11 @@ class _SleepPageState extends State<SleepPage> {
             Container(
               width: 250,
               height: 250,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(20),
-              ),
               child: Center(
                 // เปลี่ยนเป็น Image.asset('assets/raccoon_sleep.png') เมื่อมีรูปนะครับ
                 child: isSleeping
-                    ? const Icon(
-                        Icons.nightlight_round,
-                        size: 100,
-                        color: Colors.indigo,
-                      )
-                    : const Icon(
-                        Icons.wb_sunny_rounded,
-                        size: 100,
-                        color: Colors.orange,
-                      ),
+                    ? Image.asset('assets/icons/moon-2.png')
+                    : Image.asset('assets/icons/sun1.png'),
               ),
             ),
             const SizedBox(height: 30),

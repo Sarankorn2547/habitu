@@ -16,10 +16,19 @@ class PomodoroPage extends StatefulWidget {
 
 class _PomodoroPageState extends State<PomodoroPage> {
   int settingTime = 25; // เวลาเริ่มต้น (นาที)
+  late TextEditingController _timeController;
   int timeLeft = 0; // เวลาที่เหลือ (วินาที)
   Timer? _timer; // ตัวแปรสำหรับคุมเวลา
   bool isStarted = false;
   bool isPaused = true;
+
+  double _turns = 0.0; // เก็บค่าการพลิกของนาฬิกาทราย
+
+  @override
+  void initState() {
+    super.initState();
+    _timeController = TextEditingController(text: settingTime.toString());
+  }
 
   // ฟังก์ชันเริ่มนับถอยหลัง
   void startTimer() {
@@ -28,7 +37,12 @@ class _PomodoroPageState extends State<PomodoroPage> {
     setState(() {
       isStarted = true;
       isPaused = false;
+      if ((_turns % 1.0) == 0.0) {
+        _turns += 0.5; // ให้ทรายอยู่ด้านบน (กำลังจับเวลา)
+      }
     });
+
+    themePlayer.pause();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -37,6 +51,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
         } else {
           _timer!.cancel();
           isStarted = false;
+          if ((_turns % 1.0) == 0.5) {
+            _turns += 0.5; // ให้ทรายอยู่ด้านล่าง (หมดเวลา)
+          }
+          themePlayer.resume();
           _showTimeUpDialog(); // แจ้งเตือนเมื่อหมดเวลา
         }
       });
@@ -48,6 +66,9 @@ class _PomodoroPageState extends State<PomodoroPage> {
     if (_timer != null) _timer!.cancel();
     setState(() {
       isPaused = true;
+      if ((_turns % 1.0) == 0.5) {
+        _turns += 0.5; // ให้ทรายอยู่ด้านล่าง (หยุดเวลา)
+      }
     });
   }
 
@@ -77,10 +98,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              "🎉",
-              style: TextStyle(fontSize: 50),
-            ),
+            const Text("🎉", style: TextStyle(fontSize: 50)),
             const SizedBox(height: 10),
             Text(
               "You successfully focused for $settingTime minutes!",
@@ -89,8 +107,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
             const SizedBox(height: 10),
             const Text(
               "+ EXP & Coins earned!",
-              style:
-                  TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -109,7 +129,9 @@ class _PomodoroPageState extends State<PomodoroPage> {
 
   @override
   void dispose() {
+    _timeController.dispose();
     if (_timer != null) _timer!.cancel(); // เคลียร์หน่วยความจำเมื่อออกจากหน้า
+    themePlayer.resume();
     super.dispose();
   }
 
@@ -141,22 +163,13 @@ class _PomodoroPageState extends State<PomodoroPage> {
             Container(
               width: 250,
               height: 250,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300, width: 2),
-                borderRadius: BorderRadius.circular(20),
-              ),
               child: Center(
-                child: isStarted && !isPaused
-                    ? const Icon(
-                        Icons.hourglass_bottom,
-                        size: 100,
-                        color: Colors.purple,
-                      ) // แทนที่ด้วย Image.asset ของคุณ
-                    : const Icon(
-                        Icons.hourglass_empty,
-                        size: 100,
-                        color: Colors.grey,
-                      ),
+                child: AnimatedRotation(
+                  turns: _turns,
+                  duration: const Duration(milliseconds: 600), // ระยะเวลาที่ใช้ในการพลิก
+                  curve: Curves.easeInOut,
+                  child: Image.asset('assets/icons/hourglass.png'),
+                ),
               ),
             ),
             const SizedBox(height: 40),
@@ -183,21 +196,46 @@ class _PomodoroPageState extends State<PomodoroPage> {
                     IconButton(
                       onPressed: () {
                         playClickSound();
-                        setState(() => settingTime > 1 ? settingTime-- : null);
+                        if (settingTime > 1) {
+                          setState(() {
+                            settingTime--;
+                            _timeController.text = settingTime.toString();
+                          });
+                        }
                       },
                       icon: const Icon(Icons.remove),
                     ),
-                    Text(
-                      '$settingTime',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                    SizedBox(
+                      width: 80,
+                      child: TextField(
+                        controller: _timeController,
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          isDense: true,
+                        ),
+                        onChanged: (value) {
+                          int? newTime = int.tryParse(value);
+                          if (newTime != null && newTime > 0) {
+                            setState(() {
+                              settingTime = newTime;
+                            });
+                          }
+                        },
                       ),
                     ),
                     IconButton(
                       onPressed: () {
                         playClickSound();
-                        setState(() => settingTime++);
+                        setState(() {
+                          settingTime++;
+                          _timeController.text = settingTime.toString();
+                        });
                       },
                       icon: const Icon(Icons.add),
                     ),
@@ -251,7 +289,11 @@ class _PomodoroPageState extends State<PomodoroPage> {
                       _timer?.cancel();
                       setState(() {
                         isStarted = false;
+                        if ((_turns % 1.0) == 0.5) {
+                          _turns += 0.5; // ให้ทรายอยู่ด้านล่าง (ยกเลิก)
+                        }
                       });
+                      themePlayer.resume();
                     },
                     icon: const Icon(
                       Icons.cancel_outlined,

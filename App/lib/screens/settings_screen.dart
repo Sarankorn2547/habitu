@@ -47,7 +47,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               playClickSound();
               if (controller.text.isNotEmpty) {
                 await _auth.updateUsername(controller.text);
+                await FirebaseAuth.instance.currentUser?.reload();
                 if (mounted) {
+                  setState(() {});
                   ScaffoldMessenger.of(
                     context,
                   ).showSnackBar(SnackBar(content: Text("Username updated.")));
@@ -202,13 +204,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = user?.displayName;
+    final email = user?.email ?? 'No Email';
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: Text("Settings")),
       body: ListView(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.orange.shade100,
+                  child: Icon(Icons.person, size: 40, color: Colors.orange),
+                ),
+                SizedBox(height: 16),
+                if (displayName != null && displayName.isNotEmpty) ...[
+                  Text(
+                    displayName,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ] else ...[
+                  Text(
+                    email,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Divider(),
           ListTile(
-            leading: Icon(Icons.person),
+            leading: Image.asset('assets/icons/ChangeUsername.png'),
             title: Text("Change Username"),
             onTap: () {
               playClickSound();
@@ -216,7 +252,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           ListTile(
-            leading: Icon(Icons.lock),
+            leading: Image.asset('assets/icons/ChangePassword.png'),
             title: Text("Change Password"),
             onTap: () {
               playClickSound();
@@ -225,7 +261,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ListTile(
             title: Text("Background Music Volume"),
-            leading: Icon(Icons.music_note),
+            leading: Image.asset('assets/icons/BackgroundMusic.png'),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -254,7 +290,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           Divider(),
           ListTile(
-            leading: Icon(Icons.delete_sweep, color: Colors.orange),
+            leading: Image.asset('assets/icons/DeleteAllData.png'),
             title: Text(
               "Delete All Data",
               style: TextStyle(color: Colors.orange),
@@ -265,7 +301,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           ListTile(
-            leading: Icon(Icons.delete_forever, color: Colors.red),
+            leading: Image.asset('assets/icons/DeleteAccount.png'),
             title: Text("Delete Account", style: TextStyle(color: Colors.red)),
             onTap: () {
               playClickSound();
@@ -274,7 +310,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           Divider(),
           ListTile(
-            leading: Icon(Icons.logout, color: Colors.red),
+            leading: Image.asset('assets/icons/Logout.png'),
             title: Text("Logout", style: TextStyle(color: Colors.red)),
             onTap: () async {
               playClickSound();
