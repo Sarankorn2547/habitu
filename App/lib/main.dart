@@ -11,6 +11,17 @@ import 'screens/home_screen.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 final AudioPlayer themePlayer = AudioPlayer();
+double savedUnmutedVolume = 0.3;
+bool isGlobalMuted = false;
+
+void toggleGlobalMute() {
+  isGlobalMuted = !isGlobalMuted;
+  if (isGlobalMuted) {
+    themePlayer.setVolume(0.0);
+  } else {
+    themePlayer.setVolume(savedUnmutedVolume);
+  }
+}
 
 void main() async {
   // 1. รอให้ Native Code โหลดเสร็จก่อน

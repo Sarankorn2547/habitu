@@ -123,6 +123,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(isGlobalMuted ? Icons.volume_off : Icons.volume_up, color: colorScheme.primary),
+            onPressed: () {
+              playClickSound();
+              setState(() {
+                toggleGlobalMute();
+              });
+            },
+          ),
+        ],
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(horizontal: 24, vertical: 40),

@@ -37,7 +37,7 @@ class TimelineDetailPage extends StatelessWidget {
         .snapshots();
 
     final exerciseStream = FirebaseFirestore.instance
-        .collection('exercise_logs')
+        .collection('workout_logs')
         .where('user_id', isEqualTo: user.uid)
         .snapshots();
 
@@ -52,7 +52,7 @@ class TimelineDetailPage extends StatelessWidget {
           },
         ),
         title: const Text(
-          'DAILY SUMMARY',
+          'Daily Summary',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,

@@ -253,6 +253,17 @@ class _HomeScreenState extends State<HomeScreen> {
                             IconButton(
                               padding: const EdgeInsets.only(right: 8),
                               constraints: const BoxConstraints(),
+                              icon: Icon(isGlobalMuted ? Icons.volume_off : Icons.volume_up, color: const Color(0xFF927442)),
+                              onPressed: () {
+                                playClickSound();
+                                setState(() {
+                                  toggleGlobalMute();
+                                });
+                              },
+                            ),
+                            IconButton(
+                              padding: const EdgeInsets.only(right: 8),
+                              constraints: const BoxConstraints(),
                               icon: const Icon(Icons.help_outline, color: Color(0xFF927442)),
                               onPressed: () {
                                 playClickSound();
@@ -268,7 +279,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(builder: (_) => SettingsScreen()),
-                                );
+                                ).then((_) {
+                                  if (mounted) {
+                                    setState(() {});
+                                  }
+                                });
                               },
                             ),
                           ],

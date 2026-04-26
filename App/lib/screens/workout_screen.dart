@@ -112,7 +112,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
           },
         ),
         title: Text(
-          "LOG WORKOUT",
+          "Workout Time",
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2),
         ),
         centerTitle: false,
@@ -225,7 +225,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               child: ElevatedButton.icon(
                 icon: Icon(Icons.check_circle, color: Colors.white),
                 label: Text(
-                  "FINISH & GET REWARDS",
+                  "Finish & get rewards",
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -390,7 +390,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             ],
           ),
         ] else ...[
-          _buildInputLabel("DURATION (MINUTES)"),
+          _buildInputLabel("Duration (minutes)"),
           _buildTextField(_durationController, Icons.timer_outlined),
         ],
       ],
@@ -406,7 +406,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildInputLabel("SETS (OPTIONAL)"),
+                  _buildInputLabel("Sets (optional)"),
                   _buildTextField(_setsController, Icons.repeat),
                 ],
               ),
@@ -416,7 +416,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildInputLabel("REPS"),
+                  _buildInputLabel("Reps"),
                   _buildTextField(_repsController, Icons.numbers),
                 ],
               ),
@@ -485,7 +485,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          "GREAT JOB!",
+          "Great job!",
           textAlign: TextAlign.center,
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -506,7 +506,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
               playClickSound();
               Navigator.pop(context);
             },
-            child: Text("AWESOME",
+            child: Text("Awesome",
                 style:
                     TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
           ),

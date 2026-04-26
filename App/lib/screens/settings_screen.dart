@@ -19,7 +19,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     // ดึงระดับเสียงปัจจุบันจากเครื่องเล่นมาแสดงที่ Slider
-    _volume = themePlayer.volume;
+    if (isGlobalMuted) {
+      _volume = savedUnmutedVolume;
+    } else {
+      _volume = themePlayer.volume;
+      savedUnmutedVolume = _volume;
+    }
   }
 
   void _showChangeUsernameDialog() {
@@ -262,6 +267,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             title: Text("Background Music Volume"),
             leading: Image.asset('assets/icons/BackgroundMusic.png'),
+            trailing: IconButton(
+              icon: Icon(isGlobalMuted ? Icons.volume_off : Icons.volume_up, color: Colors.orange),
+              onPressed: () {
+                playClickSound();
+                setState(() {
+                  toggleGlobalMute();
+                });
+              },
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -274,12 +288,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     min: 0.0,
                     max: 1.0,
                     divisions: 100,
-                    activeColor: Colors.orange,
+                    activeColor: isGlobalMuted ? Colors.grey : Colors.orange,
                     label: "${(_volume * 100).toInt()}%",
                     onChanged: (val) {
                       setState(() {
                         _volume = val;
-                        themePlayer.setVolume(val);
+                        savedUnmutedVolume = val;
+                        if (!isGlobalMuted) {
+                          themePlayer.setVolume(val);
+                        }
                       });
                     },
                   ),

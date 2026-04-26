@@ -210,7 +210,7 @@ class _StyleScreenState extends State<StyleScreen> {
           },
         ),
         title: const Text(
-          'STYLE YOUR PET',
+          'Style Your Pet',
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2),
         ),
         centerTitle: false,

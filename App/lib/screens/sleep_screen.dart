@@ -80,7 +80,7 @@ class _SleepPageState extends State<SleepPage> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("GOOD MORNING!"),
+        title: const Text("Good morning!"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -110,7 +110,7 @@ class _SleepPageState extends State<SleepPage> with WidgetsBindingObserver {
                 secondsPassed = 0; // Reset for next sleep
               });
             },
-            child: const Text("AWAKE"),
+            child: const Text("Awake"),
           ),
         ],
       ),
