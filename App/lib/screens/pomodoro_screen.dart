@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/database_service.dart';
 import '../models/avatar_model.dart';
+import '../main.dart';
 
 class PomodoroPage extends StatefulWidget {
   final AvatarModel avatar;
@@ -20,6 +21,8 @@ class _PomodoroPageState extends State<PomodoroPage> {
   bool isStarted = false;
   bool isPaused = true;
 
+  double _turns = 0.0; // เก็บค่าการพลิกของนาฬิกาทราย
+
   // ฟังก์ชันเริ่มนับถอยหลัง
   void startTimer() {
     if (_timer != null) _timer!.cancel();
@@ -27,7 +30,10 @@ class _PomodoroPageState extends State<PomodoroPage> {
     setState(() {
       isStarted = true;
       isPaused = false;
+      _turns += 0.5; // พลิก 180 องศาแค่รอบเดียว
     });
+
+    themePlayer.pause();
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
@@ -36,6 +42,8 @@ class _PomodoroPageState extends State<PomodoroPage> {
         } else {
           _timer!.cancel();
           isStarted = false;
+          _turns += 0.5; // พลิกกลับมาเหมือนเดิม
+          themePlayer.resume();
           _showTimeUpDialog(); // แจ้งเตือนเมื่อหมดเวลา
         }
       });
@@ -105,6 +113,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
   @override
   void dispose() {
     if (_timer != null) _timer!.cancel(); // เคลียร์หน่วยความจำเมื่อออกจากหน้า
+    themePlayer.resume();
     super.dispose();
   }
 
@@ -133,14 +142,13 @@ class _PomodoroPageState extends State<PomodoroPage> {
             Container(
               width: 250,
               height: 250,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade300, width: 2),
-                borderRadius: BorderRadius.circular(20),
-              ),
               child: Center(
-                child: isStarted && !isPaused
-                    ? Image.asset('assets/icons/hourglass.png')
-                    : Image.asset('assets/icons/hourglass.png'),
+                child: AnimatedRotation(
+                  turns: _turns,
+                  duration: const Duration(milliseconds: 600), // ระยะเวลาที่ใช้ในการพลิก
+                  curve: Curves.easeInOut,
+                  child: Image.asset('assets/icons/hourglass.png'),
+                ),
               ),
             ),
             const SizedBox(height: 40),
@@ -229,7 +237,9 @@ class _PomodoroPageState extends State<PomodoroPage> {
                       _timer?.cancel();
                       setState(() {
                         isStarted = false;
+                        _turns += 0.5; // พลิกกลับมาเหมือนเดิมเมื่อยกเลิก
                       });
+                      themePlayer.resume();
                     },
                     icon: const Icon(
                       Icons.cancel_outlined,

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/database_service.dart';
 import '../models/avatar_model.dart';
+import '../main.dart';
 
 class SleepPage extends StatefulWidget {
   final AvatarModel avatar;
@@ -25,6 +26,7 @@ class _SleepPageState extends State<SleepPage> {
     });
 
     if (isSleeping) {
+      themePlayer.pause();
       // เริ่มนับเวลาเดินหน้า
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
         setState(() {
@@ -32,6 +34,7 @@ class _SleepPageState extends State<SleepPage> {
         });
       });
     } else {
+      themePlayer.resume();
       // หยุดนับเวลา
       _timer?.cancel();
       _handleWakeUp();
@@ -101,6 +104,7 @@ class _SleepPageState extends State<SleepPage> {
   @override
   void dispose() {
     _timer?.cancel();
+    themePlayer.resume();
     super.dispose();
   }
 
@@ -129,10 +133,6 @@ class _SleepPageState extends State<SleepPage> {
             Container(
               width: 250,
               height: 250,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade200),
-                borderRadius: BorderRadius.circular(20),
-              ),
               child: Center(
                 // เปลี่ยนเป็น Image.asset('assets/raccoon_sleep.png') เมื่อมีรูปนะครับ
                 child: isSleeping
