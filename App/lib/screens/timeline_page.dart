@@ -27,7 +27,7 @@ class _TimelineCalendarPageState extends State<TimelineCalendarPage> {
           },
         ),
         title: const Text(
-          'MY TIMELINE',
+          'My Timeline',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,

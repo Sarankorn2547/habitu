@@ -94,7 +94,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("TIMEOVER!"),
+        title: const Text("Time Over!"),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -120,7 +120,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
               playClickSound();
               Navigator.pop(context);
             },
-            child: const Text("GREAT!"),
+            child: const Text("Great!"),
           ),
         ],
       ),
@@ -130,7 +130,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
   @override
   void dispose() {
     _timeController.dispose();
-    if (_timer != null) _timer!.cancel(); // เคลียร์หน่วยความจำเมื่อออกจากหน้า
+    if (_timer != null) _timer!.cancel();
     themePlayer.resume();
     super.dispose();
   }
@@ -148,7 +148,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
           },
         ),
         title: const Text(
-          'FOCUSTIME',
+          'Focus Time',
           style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 2),
         ),
         centerTitle: false,
@@ -177,7 +177,7 @@ class _PomodoroPageState extends State<PomodoroPage> {
             // ส่วนที่ 2: แสดงผลเวลาและการตั้งค่า
             if (!isStarted) ...[
               const Text(
-                'SETTING TIME',
+                'Setting Time',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
               const SizedBox(height: 10),
