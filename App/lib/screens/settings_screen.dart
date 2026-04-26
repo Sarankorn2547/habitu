@@ -43,7 +43,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: () async {
               if (controller.text.isNotEmpty) {
                 await _auth.updateUsername(controller.text);
+                await FirebaseAuth.instance.currentUser?.reload();
                 if (mounted) {
+                  setState(() {});
                   ScaffoldMessenger.of(
                     context,
                   ).showSnackBar(SnackBar(content: Text("Username updated.")));
@@ -186,11 +188,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = user?.displayName;
+    final email = user?.email ?? 'No Email';
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(title: Text("Settings")),
       body: ListView(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.orange.shade100,
+                  child: Icon(Icons.person, size: 40, color: Colors.orange),
+                ),
+                SizedBox(height: 16),
+                if (displayName != null && displayName.isNotEmpty) ...[
+                  Text(
+                    displayName,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    email,
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                ] else ...[
+                  Text(
+                    email,
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Divider(),
           ListTile(
             leading: Image.asset('assets/icons/ChangeUsername.png'),
             title: Text("Change Username"),

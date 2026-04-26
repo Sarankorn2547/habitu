@@ -14,10 +14,26 @@ class SleepPage extends StatefulWidget {
   State<SleepPage> createState() => _SleepPageState();
 }
 
-class _SleepPageState extends State<SleepPage> {
+class _SleepPageState extends State<SleepPage> with WidgetsBindingObserver {
   int secondsPassed = 0; // เก็บเวลาที่นับเดินหน้า
   Timer? _timer;
   bool isSleeping = false; // สถานะว่ากำลังหลับอยู่หรือไม่
+  DateTime? _sleepStartTime;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && isSleeping && _sleepStartTime != null) {
+      setState(() {
+        secondsPassed = DateTime.now().difference(_sleepStartTime!).inSeconds;
+      });
+    }
+  }
 
   // ฟังก์ชันเริ่ม/หยุดการนับเวลา
   void toggleSleep() {
@@ -27,16 +43,23 @@ class _SleepPageState extends State<SleepPage> {
 
     if (isSleeping) {
       themePlayer.pause();
+      _sleepStartTime = DateTime.now();
+      secondsPassed = 0;
       // เริ่มนับเวลาเดินหน้า
       _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() {
-          secondsPassed++;
-        });
+        if (_sleepStartTime != null) {
+          setState(() {
+            secondsPassed = DateTime.now().difference(_sleepStartTime!).inSeconds;
+          });
+        }
       });
     } else {
       themePlayer.resume();
       // หยุดนับเวลา
       _timer?.cancel();
+      if (_sleepStartTime != null) {
+        secondsPassed = DateTime.now().difference(_sleepStartTime!).inSeconds;
+      }
       _handleWakeUp();
     }
   }
@@ -103,6 +126,7 @@ class _SleepPageState extends State<SleepPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     themePlayer.resume();
     super.dispose();

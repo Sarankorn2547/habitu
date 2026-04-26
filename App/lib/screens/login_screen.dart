@@ -52,18 +52,11 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       if (_selectedIndex == 0) {
         // --- LOGIN ---
-        final user = await authService.signIn(email, password);
-        if (user == null) {
-          throw Exception(
-            "Login failed. Please check your email and password.",
-          );
-        }
+        await authService.signIn(email, password);
       } else {
         // --- REGISTER ---
-        final user = await authService.signUp(email, password);
-        if (user == null) {
-          throw Exception("Registration failed. Please try again.");
-        } else {
+        await authService.signUp(email, password);
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text("Account created! Logging you in...")),
           );
@@ -71,7 +64,11 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       // Successful login/register will trigger stream in main.dart to redirect
     } catch (e) {
-      _showError(e.toString());
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith("Exception: ")) {
+        errorMessage = errorMessage.substring(11);
+      }
+      _showError(errorMessage);
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
